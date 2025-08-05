@@ -1,0 +1,136 @@
+version: '3.8'
+
+services:
+  # Frontend Service (React/Vite)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: disaster-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - NODE_ENV=production
+      - VITE_API_BASE_URL=http://backend:3001
+      - VITE_GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY:-your_google_maps_key}
+    volumes:
+      - ./src:/app/src:ro
+      - ./public:/app/public:ro
+    depends_on:
+      - backend
+    networks:
+      - disaster-network
+    restart: unless-stopped
+    command: npm run dev -- --host 0.0.0.0
+
+  # Backend Service (Express API)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: disaster-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - CORS_ORIGIN=http://localhost:5173
+      - FAST2SMS_API_KEY=${FAST2SMS_API_KEY:-your_fast2sms_key}
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY:-your_weather_key}
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY:-your_google_maps_key}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-your_openai_key}
+      - EMERGENCY_PHONE=${EMERGENCY_PHONE:-6001163688}
+    volumes:
+      - ./server:/app/server:ro
+      - ./logs:/app/logs
+    networks:
+      - disaster-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command: npm run start:server
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: disaster-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - disaster-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # MongoDB for data persistence
+  mongodb:
+    image: mongo:6-jammy
+    container_name: disaster-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=disaster_admin
+      - MONGO_INITDB_ROOT_PASSWORD=secure_password_123
+      - MONGO_INITDB_DATABASE=disaster_management
+    volumes:
+      - mongodb_data:/data/db
+      - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - disaster-network
+    restart: unless-stopped
+
+  # Nginx reverse proxy - DISABLED due to port 80 conflict
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: disaster-nginx
+  #   ports:
+  #     - "8080:80"
+  #     - "8443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - frontend
+  #     - backend
+  #   networks:
+  #     - disaster-network
+  #   restart: unless-stopped
+
+  # DisasterGuard Service
+  disasterguard:
+    build: .
+    ports:
+      - "3050:80"
+    container_name: disasterguard-app
+    restart: unless-stopped
+    networks:
+      - disaster-network
+
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  disaster-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Build the Docker image
+# docker build -t disasterguard-app .
+
+# Run the container
+# docker run -p 3000:80 disasterguard-app
+
+# Or use docker-compose
+# docker-compose up --build
