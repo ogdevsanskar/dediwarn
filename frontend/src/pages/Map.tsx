@@ -1,80 +1,82 @@
-import React, { useState } from 'react';
-import { MapPin, Navigation, AlertTriangle, Shield, Zap, Filter, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MapPin, Navigation, AlertTriangle, Shield, Zap, Filter, Search, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { SatelliteMap } from '../components/SatelliteMap';
-
-interface DisasterEvent {
-  id: string;
-  type: 'earthquake' | 'flood' | 'fire' | 'storm' | 'emergency';
-  severity: 'low' | 'medium' | 'high' | 'critical';
-  title: string;
-  location: {
-    lat: number;
-    lng: number;
-    address: string;
-  };
-  timestamp: string;
-  affectedArea: number; // in km
-  evacuationRequired: boolean;
-  casualties?: number;
-  description: string;
-}
+import { disasterService, DisasterEvent } from '../services/disasterService';
+import { API_CONFIG, checkApiConfiguration } from '../config/apiConfig';
 
 export const Map: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<DisasterEvent | null>(null);
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [apiStatus, setApiStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking');
+  
+  // Real disaster events from APIs
+  const [disasterEvents, setDisasterEvents] = useState<DisasterEvent[]>([]);
 
-  // Mock disaster events data
-  const [disasterEvents] = useState<DisasterEvent[]>([
-    {
-      id: '1',
-      type: 'earthquake',
-      severity: 'high',
-      title: 'Earthquake Alert - Magnitude 6.2',
-      location: {
-        lat: 40.7128,
-        lng: -74.0060,
-        address: 'New York, NY, USA'
-      },
-      timestamp: '2024-01-15T14:30:00Z',
-      affectedArea: 50,
-      evacuationRequired: true,
-      casualties: 12,
-      description: 'Strong earthquake detected. Immediate evacuation recommended for buildings over 10 stories.'
-    },
-    {
-      id: '2',
-      type: 'flood',
-      severity: 'critical',
-      title: 'Flash Flood Warning',
-      location: {
-        lat: 34.0522,
-        lng: -118.2437,
-        address: 'Los Angeles, CA, USA'
-      },
-      timestamp: '2024-01-15T12:15:00Z',
-      affectedArea: 25,
-      evacuationRequired: true,
-      casualties: 5,
-      description: 'Severe flooding in downtown area. All low-lying areas should evacuate immediately.'
-    },
-    {
-      id: '3',
-      type: 'fire',
-      severity: 'medium',
-      title: 'Wildfire Containment',
-      location: {
-        lat: 37.7749,
-        lng: -122.4194,
-        address: 'San Francisco, CA, USA'
-      },
-      timestamp: '2024-01-15T10:45:00Z',
-      affectedArea: 15,
-      evacuationRequired: false,
-      description: 'Wildfire contained but smoke advisory in effect for surrounding areas.'
+  // Load real disaster data
+  const loadDisasterData = async () => {
+    setIsLoading(true);
+    setApiStatus('checking');
+    
+    try {
+      // Check API configuration
+      const configCheck = checkApiConfiguration();
+      
+      // Get disaster events from real APIs
+      const events = await disasterService.getAllDisasterEvents({
+        includeEarthquakes: true,
+        includeWeather: configCheck.isValid,
+        cities: API_CONFIG.DEFAULT_CITIES,
+        earthquakeMinMagnitude: API_CONFIG.EARTHQUAKE_CONFIG.MIN_MAGNITUDE,
+        weatherApiKey: API_CONFIG.OPENWEATHER_API_KEY
+      });
+      
+      setDisasterEvents(events);
+      setLastUpdated(new Date());
+      setApiStatus(events.length > 0 ? 'connected' : 'disconnected');
+      
+      if (!configCheck.isValid) {
+        console.warn('API Configuration issues:', configCheck.issues);
+      }
+    } catch (error) {
+      console.error('Failed to load disaster data:', error);
+      setApiStatus('disconnected');
+      
+      // Fallback to mock data if APIs fail
+      setDisasterEvents([
+        {
+          id: 'fallback-1',
+          type: 'earthquake',
+          severity: 'high',
+          title: 'API Unavailable - Using Demo Data',
+          location: {
+            lat: 40.7128,
+            lng: -74.0060,
+            address: 'Demo Location'
+          },
+          timestamp: new Date().toISOString(),
+          affectedArea: 50,
+          evacuationRequired: false,
+          description: 'Real-time data unavailable. Please check your internet connection and API configuration.'
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
+
+  // Load data on component mount and set up auto-refresh
+  useEffect(() => {
+    loadDisasterData();
+    
+    // Auto-refresh every 5 minutes
+    const interval = setInterval(loadDisasterData, 5 * 60 * 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -246,7 +248,50 @@ export const Map: React.FC = () => {
 
             {/* Quick Stats */}
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700 p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Live Statistics</h3>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-white">Live Statistics</h3>
+                <button
+                  onClick={loadDisasterData}
+                  disabled={isLoading}
+                  className="flex items-center space-x-2 px-3 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:opacity-50 rounded-lg text-sm text-white transition-colors"
+                  title="Refresh data"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                  <span>{isLoading ? 'Loading...' : 'Refresh'}</span>
+                </button>
+              </div>
+              
+              {/* API Status Indicator */}
+              <div className="flex justify-between items-center mb-3 pb-3 border-b border-slate-600">
+                <span className="text-gray-400">Data Source:</span>
+                <div className="flex items-center space-x-2">
+                  {apiStatus === 'connected' ? (
+                    <Wifi className="h-4 w-4 text-green-400" />
+                  ) : apiStatus === 'disconnected' ? (
+                    <WifiOff className="h-4 w-4 text-red-400" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4 text-yellow-400 animate-spin" />
+                  )}
+                  <span className={`text-sm font-medium ${
+                    apiStatus === 'connected' ? 'text-green-400' : 
+                    apiStatus === 'disconnected' ? 'text-red-400' : 'text-yellow-400'
+                  }`}>
+                    {apiStatus === 'connected' ? 'Live APIs' : 
+                     apiStatus === 'disconnected' ? 'Offline' : 'Connecting...'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Last Updated */}
+              {lastUpdated && (
+                <div className="flex justify-between items-center mb-3 text-xs">
+                  <span className="text-gray-500">Last updated:</span>
+                  <span className="text-gray-400">
+                    {lastUpdated.toLocaleTimeString()}
+                  </span>
+                </div>
+              )}
+              
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-400">Active Events:</span>
