@@ -1,161 +1,181 @@
-# 🌍 AI-Powered Disaster Management System
+# 🌍 Disaster Management Application
 
-A comprehensive disaster management application with AI assistance, real-time monitoring, and emergency response capabilities.
+AI-Powered Full-Stack Disaster Management System with Separated Frontend and Backend
 
-## 🚀 **Deploy to Render**
+## 📁 Project Structure
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com)
+```
+disaster-management-app/
+├── frontend/                    # React + Vite Frontend
+│   ├── src/                    # React components and pages
+│   ├── public/                 # Static assets
+│   ├── index.html             # Main HTML file
+│   ├── package.json           # Frontend dependencies
+│   ├── vite.config.ts         # Vite configuration
+│   ├── tailwind.config.js     # Tailwind CSS config
+│   └── tsconfig.json          # TypeScript config
+│
+├── backend/                     # Express + TypeScript Backend
+│   ├── api/                    # API routes
+│   ├── server.ts              # Main server file
+│   ├── package.json           # Backend dependencies
+│   └── tsconfig.json          # TypeScript config
+│
+├── package.json               # Root package.json (workspace orchestration)
+├── render.yaml               # Render deployment configuration
+└── README.md                 # This file
+```
 
-### Quick Deployment Steps:
+## 🚀 Quick Start
 
-1. **Fork/Clone this repository**
-2. **Push to your GitHub account**
-3. **Connect to Render**:
-   - Go to [render.com](https://render.com)
-   - Connect your GitHub account
-   - Create services from your repository
+### Prerequisites
+- Node.js ≥ 18.0.0
+- npm ≥ 8.0.0
 
-### 🌐 **Frontend Deployment (Static Site)**
-- **Service Type**: Static Site
-- **Build Command**: `npm install && npm run build`
-- **Publish Directory**: `./dist`
-- **Environment Variables**: None required
+### Installation
 
-### ⚡ **Backend Deployment (Web Service)**
-- **Service Type**: Web Service
-- **Build Command**: `npm install && npm run build:server`
-- **Start Command**: `npm run start:server`
-- **Environment Variables**:
-  ```
-  NODE_ENV=production
-  FRONTEND_URL=https://your-frontend-app.onrender.com
-  ```
+1. **Install all dependencies:**
+   ```bash
+   npm run install:all
+   ```
 
-## 🎯 **Live Demo URLs**
-After deployment, your app will be available at:
-- **Frontend**: `https://your-app-name.onrender.com`
-- **Backend API**: `https://your-api-name.onrender.com`
+2. **Or install separately:**
+   ```bash
+   npm run install:frontend
+   npm run install:backend
+   ```
 
-## ✨ **Features**
+### Development
 
-### 🤖 **AI Disaster Assistant**
-- Intelligent conversation about disasters
-- Real-time emergency guidance
-- Voice recognition & text-to-speech
-- Context-aware responses
+1. **Run both frontend and backend:**
+   ```bash
+   npm run dev:full
+   ```
 
-### 📱 **Emergency Communication**
-- Instant SMS alerts
-- Quick emergency templates
-- Custom message broadcasting
-- Emergency contact management
+2. **Or run separately:**
+   ```bash
+   # Terminal 1 - Backend (Port 3001)
+   npm run dev:backend
+   
+   # Terminal 2 - Frontend (Port 5173)
+   npm run dev:frontend
+   ```
 
-### 🌊 **Disaster Monitoring**
-- Earthquake tracking & analysis
-- Flood risk assessment
-- Weather disaster alerts
-- Real-time environmental data
-
-### 🎤 **Voice Integration**
-- Speech-to-text commands
-- Audio emergency alerts
-- Hands-free operation
-- Multi-language support
-
-### 📲 **Progressive Web App**
-- Installable on mobile devices
-- Offline functionality
-- Push notifications
-- Native app-like experience
-
-## 🛠️ **Local Development**
+### Production Build
 
 ```bash
-# Clone repository
-git clone <your-repo-url>
-cd disaster-management-app
+# Build both frontend and backend
+npm run build:all
 
-# Install dependencies
-npm install
-
-# Start development servers
-npm run dev:full
-
-# Or start individually:
-npm run dev:server  # Backend on port 3001
-npm run dev         # Frontend on port 5173
+# Or build separately
+npm run build:frontend
+npm run build:backend
 ```
 
-## 📦 **Technology Stack**
+### Production Start
 
-- **Frontend**: React 18 + TypeScript + Vite
-- **Backend**: Express.js + TypeScript
-- **UI**: Tailwind CSS + Lucide Icons
-- **Voice**: Web Speech API
-- **PWA**: Service Workers + Web App Manifest
-- **Real-time**: WebSocket support ready
+```bash
+npm run start:all
+```
 
-## 🔧 **Environment Configuration**
+## 🌐 URLs
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:3001
+- **API Health Check**: http://localhost:3001/api/status
 
-### Development (.env.local):
+## 🎯 Features
+
+### 🤖 AI Assistant
+- Voice recognition and chat
+- Disaster response guidance
+- Emergency protocol assistance
+
+### 🌍 Real-Time Monitoring
+- Live earthquake data from USGS
+- Weather conditions and forecasts
+- Interactive disaster mapping
+
+### 🚨 Emergency Management
+- SMS alert system
+- Emergency broadcast notifications
+- Real-time communication channels
+
+### 💰 Donation System
+- Secure payment processing
+- Transparent fund tracking
+- Donor management
+
+### 👥 Volunteer Coordination
+- Registration and management
+- Task assignment system
+- Communication tools
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **React 18** with TypeScript
+- **Vite** for fast development
+- **Tailwind CSS** for styling
+- **Chart.js** for data visualization
+- **Socket.io** for real-time updates
+
+### Backend
+- **Express.js** with TypeScript
+- **MongoDB** for data storage
+- **Socket.io** for real-time communication
+- **External APIs** (USGS, OpenWeather)
+
+## 🚀 Deployment
+
+### Render Deployment
+The project is configured for automatic deployment on Render.com:
+
+1. Push code to GitHub
+2. Connect repository to Render
+3. Render automatically detects `render.yaml` configuration
+4. Both frontend and backend deploy automatically
+
+### Manual Deployment
+```bash
+# Build for production
+npm run build:all
+
+# Frontend builds to: frontend/dist/
+# Backend builds to: backend/dist/
+```
+
+## 📝 Scripts Reference
+
+| Command | Description |
+|---------|-------------|
+| `npm run install:all` | Install dependencies for both frontend and backend |
+| `npm run dev:full` | Start both development servers |
+| `npm run build:all` | Build both frontend and backend for production |
+| `npm run start:all` | Start both production servers |
+| `npm run lint:all` | Run linting for both projects |
+
+## 🔧 Configuration
+
+### Environment Variables
+Create `.env` files in the root directory:
+
 ```env
-VITE_API_URL=http://localhost:3001
+# Backend Configuration
 NODE_ENV=development
 PORT=3001
+OPENWEATHER_API_KEY=your_key_here
+MONGODB_URI=your_mongodb_uri
+FRONTEND_URL=http://localhost:5173
+
+# Frontend Configuration (if needed)
+VITE_API_URL=http://localhost:3001
 ```
 
-### Production (Render Environment Variables):
-```env
-NODE_ENV=production
-FRONTEND_URL=https://your-frontend.onrender.com
-PORT=10000  # Automatically set by Render
-```
+## 📄 License
+MIT License - see LICENSE file for details
 
-## 🚨 **Emergency Features Demo**
-
-Try these voice commands or text inputs:
-
-- **"Earthquake in Delhi"** - Get seismic activity analysis
-- **"Flood risk in Mumbai"** - Receive flood monitoring data  
-- **"Emergency help"** - Activate emergency protocols
-- **"Send SMS alert"** - Broadcast emergency messages
-- **"Weather alerts"** - Get severe weather warnings
-
-## 📋 **API Endpoints**
-
-- `GET /api/status` - Health check
-- `POST /api/ai/chat` - AI conversation
-- `GET /api/emergency-reports` - Emergency data
-- `GET /api/environmental-data` - Environmental monitoring
-- `POST /api/subscribe-notifications` - Push notifications
-
-## 🔐 **Security Features**
-
-- CORS protection
-- Input validation
-- XSS prevention
-- Secure headers
-- Rate limiting ready
-
-## 🤝 **Contributing**
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
-
-## 📄 **License**
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 **Support**
-
-For deployment issues:
-- Check [Render Documentation](https://render.com/docs)
-- Review build logs in Render dashboard
-- Verify environment variables are set correctly
+## 👨‍💻 Author
+SANSKAR
 
 ---
-
-**🌟 Built with ❤️ for emergency preparedness and disaster response**
+Built with ❤️ for disaster management and community safety

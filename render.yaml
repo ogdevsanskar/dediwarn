@@ -3,8 +3,8 @@ services:
   - type: web
     name: disaster-management-frontend
     env: static
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
     routes:
       - type: rewrite
         source: /api/*
@@ -18,8 +18,8 @@ services:
     name: disaster-management-backend
     env: node
     plan: free
-    buildCommand: npm install && npm run build:server
-    startCommand: npm run start:server
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
         value: production

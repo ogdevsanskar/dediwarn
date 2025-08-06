@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Shield, Menu, X, ChevronDown } from 'lucide-react';
-// import { WalletConnect } from './WalletConnect';
+import { WalletConnect } from './WalletConnect';
 
 export const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -88,7 +88,7 @@ export const Header: React.FC = () => {
           </nav>
 
           <div className="flex items-center space-x-3">
-            {/* <WalletConnect /> */}
+            <WalletConnect />
             
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}

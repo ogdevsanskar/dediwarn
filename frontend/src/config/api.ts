@@ -1,21 +1,7 @@
-// Type declarations for Vite env variables
-interface ImportMetaEnv {
-  readonly VITE_API_URL?: string;
-  readonly VITE_WS_URL?: string;
-  readonly DEV?: boolean;
-  // add other env variables here as needed
-}
-
-declare global {
-  interface ImportMeta {
-    readonly env: ImportMetaEnv;
-  }
-}
-
 // API Configuration
 export const API_CONFIG = {
-  BASE_URL: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://disaster-management-backend.onrender.com'),
-  WS_URL: import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'ws://localhost:5173' : 'wss://disaster-management-backend.onrender.com'),
+  BASE_URL: import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : 'https://disaster-management-backend.onrender.com'),
+  WS_URL: import.meta.env.VITE_WS_URL || (import.meta.env.DEV ? 'ws://localhost:3001' : 'wss://disaster-management-backend.onrender.com'),
   ENDPOINTS: {
     AI_CHAT: '/api/ai/chat',
     EMERGENCY_REPORTS: '/api/emergency-reports',
