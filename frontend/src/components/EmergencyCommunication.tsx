@@ -61,7 +61,7 @@ const EmergencyCommunication: React.FC<EmergencyCommunicationProps> = ({
   const initializeWebSocket = () => {
     const wsUrl = process.env.NODE_ENV === 'production' 
       ? 'wss://your-domain.com/ws' 
-      : 'ws://localhost:5000/ws';
+      : 'ws://localhost:3001/ws';
     
     socketRef.current = new WebSocket(wsUrl);
     

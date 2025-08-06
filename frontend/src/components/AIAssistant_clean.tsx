@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Bot, Phone, Mail, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import './AIAssistant_clean.css';
 
 // Web Speech API types
 declare global {
@@ -110,7 +111,7 @@ export const AIAssistant: React.FC = () => {
   const simulateAIResponse = async (userMessage: string): Promise<Message> => {
     try {
       // Call backend AI chat API for real-time analysis
-      const response = await fetch('http://localhost:5000/api/ai/chat', {
+      const response = await fetch('http://localhost:3001/api/ai/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -474,8 +475,8 @@ export const AIAssistant: React.FC = () => {
             <div className="bg-white text-gray-800 p-3 rounded-2xl shadow-md">
               <div className="flex space-x-1">
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce bounce-delay-1"></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce bounce-delay-2"></div>
               </div>
             </div>
           </div>

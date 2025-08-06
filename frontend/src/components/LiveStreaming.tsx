@@ -83,7 +83,7 @@ const LiveStreaming: React.FC<LiveStreamingProps> = ({
   const initializeWebSocket = () => {
     const wsUrl = process.env.NODE_ENV === 'production'
       ? 'wss://your-domain.com/streaming'
-      : 'ws://localhost:5000/streaming';
+      : 'ws://localhost:3001/streaming';
 
     socketRef.current = new WebSocket(wsUrl);
 

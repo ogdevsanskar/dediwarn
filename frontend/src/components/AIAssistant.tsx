@@ -440,7 +440,7 @@ export const AIAssistant: React.FC = () => {
 
       {/* AI Assistant Panel */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-80 h-96 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-[9999] flex flex-col">
+        <div className="fixed bottom-24 right-6 w-80 lg:w-96 h-96 lg:h-[500px] bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-[9999] flex flex-col max-w-[calc(100vw-2rem)] max-h-[calc(100vh-8rem)]">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-slate-700">
             <div className="flex items-center space-x-2">

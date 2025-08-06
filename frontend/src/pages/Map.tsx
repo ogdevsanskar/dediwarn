@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, Navigation, AlertTriangle, Shield, Zap, Filter, Search } from 'lucide-react';
-import { RealTimeMap } from '../components/RealTimeMap';
+import { SatelliteMap } from '../components/SatelliteMap';
 
 interface DisasterEvent {
   id: string;
@@ -120,10 +120,10 @@ export const Map: React.FC = () => {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-white mb-4 flex items-center">
             <MapPin className="h-7 w-7 mr-3 text-blue-400" />
-            Live Disaster Map
+            🛰️ Live Satellite Disaster Map
           </h1>
           <p className="text-gray-400 text-base">
-            Real-time monitoring and navigation for disaster events worldwide
+            Real-time monitoring with satellite imagery and navigation for disaster events worldwide
           </p>
         </div>
 
@@ -134,7 +134,7 @@ export const Map: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-white flex items-center">
                   <Navigation className="h-5 w-5 mr-2 text-blue-400" />
-                  Interactive Map
+                  🛰️ Satellite Map View
                 </h2>
                 {isNavigating && (
                   <div className="flex items-center text-blue-400 animate-pulse">
@@ -144,12 +144,13 @@ export const Map: React.FC = () => {
                 )}
               </div>
               
-              {/* Real-time Map Component */}
+              {/* Enhanced Satellite Map Component */}
               <div className="relative h-96 bg-slate-900 rounded-lg overflow-hidden">
-                <RealTimeMap 
+                <SatelliteMap 
                   events={filteredEvents}
                   selectedEvent={selectedEvent}
                   onEventSelect={setSelectedEvent}
+                  className="w-full h-full"
                 />
               </div>
             </div>
@@ -182,6 +183,7 @@ export const Map: React.FC = () => {
                 <select
                   value={filterSeverity}
                   onChange={(e) => setFilterSeverity(e.target.value)}
+                  title="Filter by severity level"
                   className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
                 >
                   <option value="all">All Levels</option>

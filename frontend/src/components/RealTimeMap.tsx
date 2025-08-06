@@ -1,5 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MapPin, Shield } from 'lucide-react';
+import styled from 'styled-components';
+import './RealTimeMap.css'; // Import the CSS file for the component
 
 interface DisasterEvent {
   id: string;
@@ -24,6 +26,13 @@ interface RealTimeMapProps {
   onEventSelect: (event: DisasterEvent) => void;
 }
 
+const MapContainer = styled.div<{ $isActive: boolean }>`
+  width: 100%;
+  height: 400px;
+  background-color: ${props => props.$isActive ? '#e8f5e8' : '#f0f0f0'};
+  border-radius: 8px;
+`;
+
 export const RealTimeMap: React.FC<RealTimeMapProps> = ({ 
   events, 
   selectedEvent, 
@@ -32,6 +41,7 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapCenter, setMapCenter] = useState({ lat: 40.7128, lng: -74.0060 });
   const [zoom, setZoom] = useState(4);
+  // Removed unused isActive state
 
   // Simulate map markers positioning
   const getMarkerPosition = (event: DisasterEvent) => {
@@ -74,14 +84,11 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({
   }, [selectedEvent]);
 
   return (
-    <div ref={mapRef} className="relative w-full h-full bg-slate-900 rounded-lg overflow-hidden">
+    <MapContainer $isActive={false} ref={mapRef} className="real-time-map">
       {/* Map Background - Simulated world map */}
       <div 
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23334155' fill-opacity='0.1'%3E%3Ccircle cx='9' cy='9' r='1'/%3E%3Ccircle cx='19' cy='9' r='1'/%3E%3Ccircle cx='29' cy='9' r='1'/%3E%3Ccircle cx='39' cy='9' r='1'/%3E%3Ccircle cx='49' cy='9' r='1'/%3E%3Ccircle cx='9' cy='19' r='1'/%3E%3Ccircle cx='19' cy='19' r='1'/%3E%3Ccircle cx='29' cy='19' r='1'/%3E%3Ccircle cx='39' cy='19' r='1'/%3E%3Ccircle cx='49' cy='19' r='1'/%3E%3Ccircle cx='9' cy='29' r='1'/%3E%3Ccircle cx='19' cy='29' r='1'/%3E%3Ccircle cx='29' cy='29' r='1'/%3E%3Ccircle cx='39' cy='29' r='1'/%3E%3Ccircle cx='49' cy='29' r='1'/%3E%3Ccircle cx='9' cy='39' r='1'/%3E%3Ccircle cx='19' cy='39' r='1'/%3E%3Ccircle cx='29' cy='39' r='1'/%3E%3Ccircle cx='39' cy='39' r='1'/%3E%3Ccircle cx='49' cy='39' r='1'/%3E%3Ccircle cx='9' cy='49' r='1'/%3E%3Ccircle cx='19' cy='49' r='1'/%3E%3Ccircle cx='29' cy='49' r='1'/%3E%3Ccircle cx='39' cy='49' r='1'/%3E%3Ccircle cx='49' cy='49' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          transform: `scale(${zoom / 4})`
-        }}
+        className={`absolute inset-0 opacity-20 realtime-map-bg map-bg-scaled`}
+        data-zoom={zoom}
       />
 
       {/* Grid overlay */}
@@ -90,16 +97,16 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({
       </div>
 
       {/* Map controls */}
-      <div className="absolute top-4 right-4 z-20 space-y-2">
+      <div className="map-controls">
         <button
           onClick={() => setZoom(Math.min(zoom + 1, 10))}
-          className="w-8 h-8 bg-slate-700 hover:bg-slate-600 text-white rounded border border-slate-500 flex items-center justify-center transition-colors"
+          className="control-button"
         >
           +
         </button>
         <button
           onClick={() => setZoom(Math.max(zoom - 1, 1))}
-          className="w-8 h-8 bg-slate-700 hover:bg-slate-600 text-white rounded border border-slate-500 flex items-center justify-center transition-colors"
+          className="control-button"
         >
           -
         </button>
@@ -118,13 +125,10 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({
         return (
           <div
             key={event.id}
-            className="absolute z-15 transform -translate-x-1/2 -translate-y-1/2 cursor-pointer"
-            style={{ 
-              left: position.x, 
-              top: position.y,
-              transform: `translate(-50%, -50%) scale(${isSelected ? 1.2 : 1})`,
-              transition: 'transform 0.2s ease'
-            }}
+            className={`event-marker absolute z-15 cursor-pointer ${isSelected ? 'selected' : ''}`}
+            data-left={position.x}
+            data-top={position.y}
+            data-scale={isSelected ? 1.2 : 1}
             onClick={() => onEventSelect(event)}
           >
             {/* Ripple effect for critical events */}
@@ -223,6 +227,6 @@ export const RealTimeMap: React.FC<RealTimeMapProps> = ({
           Zoom: {zoom}x
         </div>
       </div>
-    </div>
+    </MapContainer>
   );
 };

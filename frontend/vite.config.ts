@@ -13,7 +13,7 @@ export default defineConfig({
     strictPort: false,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'https://disaster-management-backend-qtxs.onrender.com',
         changeOrigin: true,
         secure: false,
       },
