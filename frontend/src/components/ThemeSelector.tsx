@@ -23,15 +23,14 @@ export const ThemeSelector: React.FC = () => {
               <button
                 key={key}
                 onClick={() => {
-                  setTheme(key as any);
+                  setTheme(key as keyof typeof themes);
                   setIsOpen(false);
                 }}
                 className="w-full flex items-center justify-between p-2 rounded-lg hover:bg-background transition-colors"
               >
                 <div className="flex items-center space-x-3">
                   <div 
-                    className="w-4 h-4 rounded-full border-2 border-border"
-                    style={{ background: themeConfig.colors.gradient }}
+                    className={`w-4 h-4 rounded-full border-2 border-border theme-gradient-${key}`}
                   />
                   <span className="text-text text-sm">{themeConfig.name}</span>
                 </div>

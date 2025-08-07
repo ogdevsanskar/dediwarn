@@ -1,4 +1,5 @@
 import React from 'react';
+import './AnimatedBackground.css';
 
 export const AnimatedBackground: React.FC = () => {
   return (
@@ -8,37 +9,45 @@ export const AnimatedBackground: React.FC = () => {
       
       {/* Floating particles */}
       <div className="absolute inset-0">
-        {[...Array(30)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-blue-400 opacity-30 rounded-full animate-float"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${3 + Math.random() * 4}s`
-            }}
-          />
-        ))}
+        {[...Array(30)].map((_, i) => {
+          const left = `${Math.random() * 100}%`;
+          const top = `${Math.random() * 100}%`;
+          const animationDelay = `${Math.random() * 5}s`;
+          const animationDuration = `${3 + Math.random() * 4}s`;
+          return (
+            <div
+              key={i}
+              className="particle"
+              data-left={left}
+              data-top={top}
+              data-delay={animationDelay}
+              data-duration={animationDuration}
+            />
+          );
+        })}
       </div>
 
       {/* Large floating orbs */}
-      {[...Array(5)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full blur-3xl animate-pulse-slow opacity-10"
-          style={{
-            width: `${100 + Math.random() * 200}px`,
-            height: `${100 + Math.random() * 200}px`,
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            background: `linear-gradient(135deg, ${
-              ['#3B82F6', '#8B5CF6', '#06B6D4', '#10B981', '#F59E0B'][Math.floor(Math.random() * 5)]
-            }, transparent)`,
-            animationDelay: `${Math.random() * 3}s`
-          }}
-        />
-      ))}
+      {[...Array(5)].map((_, i) => {
+        const width = 100 + Math.random() * 200;
+        const height = 100 + Math.random() * 200;
+        const left = `${Math.random() * 100}%`;
+        const top = `${Math.random() * 100}%`;
+        const color = ['#3B82F6', '#8B5CF6', '#06B6D4', '#10B981', '#F59E0B'][Math.floor(Math.random() * 5)];
+        const animationDelay = `${Math.random() * 3}s`;
+        return (
+          <div
+            key={i}
+            className="large-orb"
+            data-orb-width={`${width}px`}
+            data-orb-height={`${height}px`}
+            data-orb-left={left}
+            data-orb-top={top}
+            data-orb-bg={`linear-gradient(135deg, ${color}, transparent)`}
+            data-orb-delay={animationDelay}
+          />
+        );
+      })}
       
       {/* Grid pattern */}
       <div className="absolute inset-0 bg-grid-pattern opacity-5" />
@@ -60,8 +69,7 @@ export const AnimatedBackground: React.FC = () => {
             y2={`${Math.random() * 100}%`}
             stroke="url(#lineGradient)"
             strokeWidth="1"
-            className="animate-pulse"
-            style={{ animationDelay: `${i * 0.5}s` }}
+            className={`animate-pulse line-delay-${i}`}
           />
         ))}
       </svg>

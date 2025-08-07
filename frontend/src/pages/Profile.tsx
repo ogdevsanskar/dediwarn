@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Settings, Bell, Shield, Activity, Award, Edit, Save, X } from 'lucide-react';
+import { User, Bell, Shield, Activity, Award, Edit, Save, X } from 'lucide-react';
 
 export const Profile: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -36,7 +36,7 @@ export const Profile: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Profile Card */}
           <div className="lg:col-span-1">
-            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 animate-fade-in-up animation-delay-01">
               <div className="text-center">
                 <div className="relative inline-block mb-4">
                   <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
@@ -62,7 +62,7 @@ export const Profile: React.FC = () => {
             </div>
 
             {/* Quick Stats */}
-            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 mt-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 mt-6 animate-fade-in-up animation-delay-2">
               <h3 className="text-lg font-semibold text-white mb-4">Activity Stats</h3>
               <div className="space-y-4">
                 {[
@@ -85,7 +85,7 @@ export const Profile: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Profile Information */}
-            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 animate-fade-in-up animation-delay-3" >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-white">Profile Information</h3>
                 {!isEditing ? (
@@ -137,6 +137,8 @@ export const Profile: React.FC = () => {
                           [field.key]: e.target.value
                         })}
                         className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                        placeholder={`Enter ${field.label}`}
+                        title={field.label}
                       />
                     ) : (
                       <p className="text-white bg-slate-700/50 px-3 py-2 rounded-lg">
@@ -160,6 +162,8 @@ export const Profile: React.FC = () => {
                     })}
                     rows={3}
                     className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter your bio"
+                    title="Bio"
                   />
                 ) : (
                   <p className="text-white bg-slate-700/50 px-3 py-2 rounded-lg">
@@ -170,7 +174,7 @@ export const Profile: React.FC = () => {
             </div>
 
             {/* Settings */}
-            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 animate-fade-in-up animation-delay-4">
               <h3 className="text-lg font-semibold text-white mb-6">Notification Settings</h3>
               <div className="space-y-4">
                 {[
@@ -184,8 +188,18 @@ export const Profile: React.FC = () => {
                       <h4 className="text-white font-medium">{setting.label}</h4>
                       <p className="text-sm text-slate-400">{setting.description}</p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input type="checkbox" className="sr-only peer" defaultChecked={index < 2} />
+                    <label
+                      htmlFor={`setting-checkbox-${index}`}
+                      className="relative inline-flex items-center cursor-pointer"
+                    >
+                      <input
+                        id={`setting-checkbox-${index}`}
+                        type="checkbox"
+                        className="sr-only peer"
+                        defaultChecked={index < 2}
+                        title={setting.label}
+                        placeholder={setting.label}
+                      />
                       <div className="w-11 h-6 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
@@ -194,7 +208,7 @@ export const Profile: React.FC = () => {
             </div>
 
             {/* Recent Activity */}
-            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+            <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 animate-fade-in-up animation-delay-5">
               <h3 className="text-lg font-semibold text-white mb-6">Recent Activity</h3>
               <div className="space-y-4">
                 {[

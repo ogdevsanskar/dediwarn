@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, AlertCircle, CheckCircle, Clock, TrendingUp, Activity, Users, Globe } from 'lucide-react';
+import { Plus, AlertCircle, CheckCircle, Clock, TrendingUp, Activity, Globe } from 'lucide-react';
 import { StatsCard } from './StatsCard';
+import './Dashboard.css';
 
 interface Warning {
   id: string;
@@ -77,8 +78,7 @@ export const Dashboard: React.FC = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <div className="animate-fade-in-up delay-1">
             <StatsCard
               title="Total Warnings"
               value="1,247"
@@ -88,7 +88,7 @@ export const Dashboard: React.FC = () => {
             />
           </div>
           
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <div className="animate-fade-in-up delay-2">
             <StatsCard
               title="Active Warnings"
               value="23"
@@ -99,7 +99,7 @@ export const Dashboard: React.FC = () => {
             />
           </div>
           
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <div className="animate-fade-in-up delay-3">
             <StatsCard
               title="Network Nodes"
               value="2,500"
@@ -109,7 +109,7 @@ export const Dashboard: React.FC = () => {
             />
           </div>
           
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <div className="animate-fade-in-up delay-4">
             <StatsCard
               title="Response Time"
               value="<15s"
@@ -118,10 +118,8 @@ export const Dashboard: React.FC = () => {
               icon={Activity}
             />
           </div>
-        </div>
-
         {/* Warnings Table */}
-        <div className="bg-surface rounded-2xl shadow-xl border border-border overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+        <div className="bg-surface rounded-2xl shadow-xl border border-border overflow-hidden animate-fade-in-up dashboard-animation-delay">
           <div className="px-6 py-4 border-b border-border bg-gradient-to-r from-primary to-secondary">
             <h3 className="text-lg font-semibold text-white">Recent Warnings</h3>
           </div>
@@ -141,8 +139,7 @@ export const Dashboard: React.FC = () => {
                 {warnings.map((warning, index) => (
                   <tr 
                     key={warning.id} 
-                    className="hover:bg-background transition-colors group animate-slide-in-left"
-                    style={{ animationDelay: `${0.6 + index * 0.1}s` }}
+                    className={`hover:bg-background transition-colors group animate-slide-in-left animation-delay-${index}`}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-text group-hover:text-primary transition-colors">

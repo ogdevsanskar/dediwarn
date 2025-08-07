@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 // import { X, Send, Bot, Phone, Mail, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
+const API_BASE_URL = import.meta.env.MODE === 'production' 
   ? 'https://your-production-api.com' 
   : 'http://localhost:3001';
 

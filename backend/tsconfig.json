@@ -23,11 +23,11 @@
   },
   "include": [
     "server.ts",
+    "src/**/*",
     "api/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "src"
+    "dist"
   ]
 }

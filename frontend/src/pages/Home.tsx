@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AlertTriangle, Shield, Zap, Globe, ArrowRight, Play, TrendingUp, Users, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import './Home.css';
 
 export const Home: React.FC = () => {
   const [currentStat, setCurrentStat] = useState(0);
@@ -54,14 +55,13 @@ export const Home: React.FC = () => {
                 <span className="animate-pulse">|</span>
               </span>
             </h1>
-            
-            <p className="text-xl text-slate-300 mb-10 max-w-3xl mx-auto animate-fade-in-up leading-relaxed" style={{ animationDelay: '0.2s' }}>
+            <p className="text-xl text-slate-300 mb-10 max-w-3xl mx-auto animate-fade-in-up leading-relaxed animation-delay-02">
               Secure, transparent, and immutable warning distribution powered by smart contracts. 
               Protect communities with blockchain-verified alerts that can't be censored or manipulated.
             </p>
             
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 animate-fade-in-up animation-delay-04">
               <Link 
                 to="/warnings"
                 className="group bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-2xl flex items-center space-x-2"
@@ -76,7 +76,7 @@ export const Home: React.FC = () => {
             </div>
 
             {/* Animated stats carousel */}
-            <div className="mb-16 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+            <div className="mb-16 animate-fade-in-up animation-delay-06">
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700 inline-block shadow-2xl">
                 <div className="flex items-center space-x-4">
                   <div className="p-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg">
@@ -104,7 +104,7 @@ export const Home: React.FC = () => {
             <h2 className="text-4xl font-bold text-white mb-4 animate-fade-in-up">
               Revolutionary Features
             </h2>
-            <p className="text-xl text-slate-400 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <p className="text-xl text-slate-400 animate-fade-in-up animation-delay-01">
               Built for the future of emergency communications
             </p>
           </div>
@@ -135,8 +135,7 @@ export const Home: React.FC = () => {
             ].map((feature, index) => (
               <div
                 key={index}
-                className="group bg-slate-800/60 backdrop-blur-sm p-8 rounded-2xl border border-slate-700 hover:border-slate-600 hover:shadow-2xl transition-all duration-500 hover:transform hover:-translate-y-4 animate-fade-in-up card-hover"
-                style={{ animationDelay: feature.delay }}
+                className={`group bg-slate-800/60 backdrop-blur-sm p-8 rounded-2xl border border-slate-700 hover:border-slate-600 hover:shadow-2xl transition-all duration-500 hover:transform hover:-translate-y-4 animate-fade-in-up card-hover feature-delay-${index}`}
               >
                 <div className="relative mb-6">
                   <div className={`p-4 bg-gradient-to-r ${feature.color} rounded-xl inline-block group-hover:scale-110 transition-transform duration-300`}>
@@ -168,8 +167,7 @@ export const Home: React.FC = () => {
             ].map((stat, index) => (
               <div
                 key={index}
-                className="bg-slate-800/60 backdrop-blur-sm p-6 rounded-xl border border-slate-700 hover:border-slate-600 transition-all duration-300 hover:transform hover:scale-105 animate-fade-in-up"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                className={`bg-slate-800/60 backdrop-blur-sm p-6 rounded-xl border border-slate-700 hover:border-slate-600 transition-all duration-300 hover:transform hover:scale-105 animate-fade-in-up stat-delay-${index}`}
               >
                 <div className="flex items-center justify-between mb-4">
                   <stat.icon className="h-8 w-8 text-blue-400" />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CloudRain, Thermometer, Wind, Eye, AlertTriangle, TrendingUp, MapPin, Calendar, Zap, Mountain, Waves } from 'lucide-react';
+import { CloudRain, Thermometer, Wind, Eye, AlertTriangle, TrendingUp, MapPin, Zap, Mountain, Waves } from 'lucide-react';
 import { LiveChart } from '../components/LiveChart';
 
 interface DisasterPrediction {
@@ -28,7 +28,6 @@ interface WeatherData {
 
 export const Prediction: React.FC = () => {
   const [selectedDisaster, setSelectedDisaster] = useState<string>('all');
-  const [timeRange, setTimeRange] = useState('7d');
   const [weatherData, setWeatherData] = useState<WeatherData>({
     temperature: 22,
     humidity: 65,
@@ -191,8 +190,7 @@ export const Prediction: React.FC = () => {
           ].map((metric, index) => (
             <div
               key={index}
-              className="bg-slate-800/60 backdrop-blur-sm rounded-xl p-4 border border-slate-700 hover:border-slate-600 transition-all duration-300 animate-fade-in-up"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className={`bg-slate-800/60 backdrop-blur-sm rounded-xl p-4 border border-slate-700 hover:border-slate-600 transition-all duration-300 animate-fade-in-up fade-delay-${index}`}
             >
               <div className="flex items-center justify-between mb-2">
                 <metric.icon className={`h-5 w-5 ${metric.color}`} />
@@ -205,7 +203,7 @@ export const Prediction: React.FC = () => {
         </div>
 
         {/* Disaster Type Filter */}
-        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 mb-8 animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 mb-8 animate-fade-in-up fade-delay-7">
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setSelectedDisaster('all')}
@@ -236,14 +234,14 @@ export const Prediction: React.FC = () => {
 
         {/* Prediction Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+          <div className="animate-fade-in-up fade-delay-8">
             <LiveChart 
               type="line" 
               title="Disaster Probability Trends" 
               height={300}
             />
           </div>
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
+          <div className="animate-fade-in-up fade-delay-9">
             <LiveChart 
               type="bar" 
               title="Risk Distribution by Region" 
@@ -257,85 +255,83 @@ export const Prediction: React.FC = () => {
           {filteredPredictions.map((prediction, index) => (
             <div
               key={prediction.id}
-              className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 hover:border-slate-600 transition-all duration-300 hover:transform hover:scale-105 animate-fade-in-up"
-              style={{ animationDelay: `${1.0 + index * 0.1}s` }}
+              className={`bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 hover:border-slate-600 transition-all duration-300 hover:transform hover:scale-105 animate-fade-in-up prediction-delay-${index}`}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className={`p-3 bg-slate-700 rounded-lg`}>
-                    <prediction.icon className={`h-6 w-6 ${prediction.color}`} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-white">{prediction.type}</h3>
-                    <div className="flex items-center space-x-2 mt-1">
-                      <MapPin className="h-4 w-4 text-slate-400" />
-                      <span className="text-slate-400 text-sm">{prediction.location}</span>
+              <>
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-3 bg-slate-700 rounded-lg`}>
+                      <prediction.icon className={`h-6 w-6 ${prediction.color}`} />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-white">{prediction.type}</h3>
+                      <div className="flex items-center space-x-2 mt-1">
+                        <MapPin className="h-4 w-4 text-slate-400" />
+                        <span className="text-slate-400 text-sm">{prediction.location}</span>
+                      </div>
                     </div>
                   </div>
+                  <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getSeverityColor(prediction.severity)}`}>
+                    {prediction.severity.toUpperCase()}
+                  </span>
                 </div>
-                <span className={`px-3 py-1 text-xs font-semibold rounded-full border ${getSeverityColor(prediction.severity)}`}>
-                  {prediction.severity.toUpperCase()}
-                </span>
-              </div>
 
-              <p className="text-slate-400 mb-4 leading-relaxed">{prediction.description}</p>
+                <p className="text-slate-400 mb-4 leading-relaxed">{prediction.description}</p>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div className="bg-slate-700/30 rounded-lg p-3">
-                  <div className="text-2xl font-bold text-white mb-1">{prediction.probability}%</div>
-                  <div className="text-slate-400 text-sm">Probability</div>
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="bg-slate-700/30 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-white mb-1">{prediction.probability}%</div>
+                    <div className="text-slate-400 text-sm">Probability</div>
+                  </div>
+                  <div className="bg-slate-700/30 rounded-lg p-3">
+                    <div className="text-2xl font-bold text-white mb-1">{prediction.confidence}%</div>
+                    <div className="text-slate-400 text-sm">Confidence</div>
+                  </div>
                 </div>
-                <div className="bg-slate-700/30 rounded-lg p-3">
-                  <div className="text-2xl font-bold text-white mb-1">{prediction.confidence}%</div>
-                  <div className="text-slate-400 text-sm">Confidence</div>
-                </div>
-              </div>
 
-              <div className="space-y-3">
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-400">Risk Level:</span>
-                  <div className="w-32 bg-slate-700 rounded-full h-2">
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">Risk Level:</span>
                     <div
-                      className={`h-2 rounded-full transition-all duration-1000 ${
+                      className={`h-2 rounded-full transition-all duration-1000 risk-bar-width-${Math.round(prediction.probability)} ${
                         prediction.probability >= 80 ? 'bg-red-500' :
                         prediction.probability >= 60 ? 'bg-orange-500' :
                         prediction.probability >= 40 ? 'bg-yellow-500' : 'bg-green-500'
                       }`}
-                      style={{ width: `${prediction.probability}%` }}
                     />
+                  </div>
+
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">Timeframe:</span>
+                    <span className="text-white font-medium">{prediction.timeframe}</span>
+                  </div>
+
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">Affected Population:</span>
+                    <span className="text-white font-medium">
+                      {prediction.affectedPopulation.toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">Last Updated:</span>
+                    <span className="text-white font-medium">{prediction.lastUpdated}</span>
                   </div>
                 </div>
 
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-400">Timeframe:</span>
-                  <span className="text-white font-medium">{prediction.timeframe}</span>
+                <div className="mt-4 pt-4 border-t border-slate-700">
+                  <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span>Create Alert</span>
+                  </button>
                 </div>
-
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-400">Affected Population:</span>
-                  <span className="text-white font-medium">
-                    {prediction.affectedPopulation.toLocaleString()}
-                  </span>
-                </div>
-
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-slate-400">Last Updated:</span>
-                  <span className="text-white font-medium">{prediction.lastUpdated}</span>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-slate-700">
-                <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center space-x-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  <span>Create Alert</span>
-                </button>
-              </div>
+              </>
             </div>
           ))}
         </div>
 
         {/* AI Model Information */}
-        <div className="mt-12 bg-slate-800/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-700 animate-fade-in-up" style={{ animationDelay: '1.5s' }}>
+        <div className="mt-12 bg-slate-800/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-700 animate-fade-in-up fade-delay-15">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-white mb-4">AI Prediction Models</h2>
             <p className="text-slate-400 max-w-2xl mx-auto">

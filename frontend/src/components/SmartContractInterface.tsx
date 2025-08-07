@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Code, Send, Check, Loader, ExternalLink, AlertTriangle, Activity } from 'lucide-react';
+import { Code, Send, Loader, ExternalLink, AlertTriangle, Activity } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
 import { WarningContract } from '../contracts/WarningContract';
 
@@ -12,7 +12,34 @@ export const SmartContractInterface: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [warningCount, setWarningCount] = useState(0);
   const [isAuthorized, setIsAuthorized] = useState(false);
-  const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
+  type Transaction = {
+    id: number;
+    type: string;
+    hash: string;
+    timestamp: Date;
+    status?: string;
+    details?: {
+      id?: number;
+      message?: string;
+      severity?: number;
+      issuer?: string;
+      location?: string;
+    };
+  };
+
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
+
+  const loadContractData = React.useCallback(async (contract: WarningContract) => {
+    try {
+      await loadWarningCount(contract);
+      if (account) {
+        const authorized = await contract.isAuthorizedIssuer(account);
+        setIsAuthorized(authorized);
+      }
+    } catch (error) {
+      console.error('Error loading contract data:', error);
+    }
+  }, [account]);
 
   useEffect(() => {
     if (provider && signer && isConnected) {
@@ -48,19 +75,7 @@ export const SmartContractInterface: React.FC = () => {
         warningContract.removeAllListeners();
       };
     }
-  }, [provider, signer, isConnected]);
-
-  const loadContractData = async (contract: WarningContract) => {
-    try {
-      await loadWarningCount(contract);
-      if (account) {
-        const authorized = await contract.isAuthorizedIssuer(account);
-        setIsAuthorized(authorized);
-      }
-    } catch (error) {
-      console.error('Error loading contract data:', error);
-    }
-  };
+  }, [provider, signer, isConnected, loadContractData]);
 
   const loadWarningCount = async (contract: WarningContract) => {
     try {
@@ -92,9 +107,13 @@ export const SmartContractInterface: React.FC = () => {
       
       // Show success message
       alert('Warning successfully submitted to blockchain!');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error submitting warning:', error);
-      alert(`Error: ${error.message || 'Failed to submit warning'}`);
+      let message = 'Failed to submit warning';
+      if (error instanceof Error) {
+        message = error.message;
+      }
+      alert(`Error: ${message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -191,10 +210,12 @@ export const SmartContractInterface: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
+              <label htmlFor="severity-select" className="block text-sm font-medium text-slate-300 mb-2">
                 Severity Level *
               </label>
               <select
+                id="severity-select"
+                aria-label="Severity Level"
                 value={severity}
                 onChange={(e) => setSeverity(Number(e.target.value))}
                 className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"

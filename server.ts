@@ -1,6 +1,6 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
+import express = require('express');
+import cors = require('cors');
+import * as dotenv from 'dotenv';
 import axios from 'axios';
 
 dotenv.config();

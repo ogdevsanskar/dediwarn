@@ -25,7 +25,14 @@
     "lint:all": "npm run lint:backend && npm run lint:frontend"
   },
   "devDependencies": {
-    "concurrently": "^8.2.1"
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/methods": "^1.1.4",
+    "@types/ms": "^2.1.0",
+    "@types/node": "^24.2.0",
+    "@types/supertest": "^6.0.3",
+    "concurrently": "^8.2.2",
+    "supertest": "^7.1.4",
+    "vite": "^7.1.0"
   },
   "workspaces": [
     "frontend",
@@ -39,5 +46,9 @@
     "typescript"
   ],
   "author": "SANSKAR",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@types/three": "^0.179.0",
+    "three": "^0.179.1"
+  }
 }

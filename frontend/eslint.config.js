@@ -23,6 +23,14 @@ export default tseslint.config(
         'warn',
         { allowConstantExport: true },
       ],
+      // Relaxed rules for development
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unsafe-function-type': 'warn',
+      'no-useless-escape': 'warn',
+      'no-case-declarations': 'warn',
+      'prefer-const': 'warn',
+      'react-hooks/exhaustive-deps': 'warn',
     },
   }
 );

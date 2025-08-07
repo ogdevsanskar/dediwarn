@@ -20,6 +20,7 @@ import LiveStreaming from './components/LiveStreaming';
 import { NotificationCenter } from './components/NotificationCenter';
 import AdminPanel from './components/AdminPanel.tsx';
 import VideoCallSystem from './components/VideoCallSystem';
+import EmergencySystemIntegration from './components/EmergencySystemIntegration';
 import { initializeButtonFunctionality } from './components/ButtonFunctionality';
 
 function App() {
@@ -353,6 +354,7 @@ function App() {
             <Route path="/volunteers" element={<Volunteers />} />
             <Route path="/training" element={<Training />} />
             <Route path="/map" element={<Map />} />
+            <Route path="/emergency-systems" element={<EmergencySystemIntegration />} />
             <Route 
               path="/video-call" 
               element={<VideoCallSystem emergencyNumber="6001163688" />} 

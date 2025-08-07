@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import styles from './LiveChart.module.css';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -29,11 +30,10 @@ ChartJS.register(
 interface LiveChartProps {
   type: 'line' | 'bar' | 'doughnut';
   title: string;
-  data?: any;
   height?: number;
 }
 
-export const LiveChart: React.FC<LiveChartProps> = ({ type, title, data, height = 300 }) => {
+export const LiveChart: React.FC<LiveChartProps> = ({ type, title, height = 300 }) => {
   const [chartData, setChartData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -189,9 +189,9 @@ export const LiveChart: React.FC<LiveChartProps> = ({ type, title, data, height 
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-white">{title}</h3>
           {getIcon()}
-        </div>
-        <div className="flex items-center justify-center" style={{ height }}>
+        <div className={`flex items-center justify-center live-chart-loader`} >
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+        </div>
         </div>
       </div>
     );
@@ -208,8 +208,8 @@ export const LiveChart: React.FC<LiveChartProps> = ({ type, title, data, height 
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
         </div>
       </div>
-      <div style={{ height }}>
-        <ChartComponent data={chartData} options={options} />
+      <div className={styles.chartContainer}>
+        <ChartComponent data={chartData} options={options} height={height} />
       </div>
     </div>
   );

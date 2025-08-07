@@ -111,7 +111,7 @@ export const Warnings: React.FC = () => {
         </div>
 
         {/* Search and Filter */}
-        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-700 mb-8 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-700 mb-8 animate-fade-in-up animation-delay-01s">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
@@ -124,8 +124,10 @@ export const Warnings: React.FC = () => {
               />
             </div>
             <div className="relative">
+              <label htmlFor="severity-select" className="sr-only">Filter by severity</label>
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-slate-400" />
               <select
+                id="severity-select"
                 value={selectedSeverity}
                 onChange={(e) => setSelectedSeverity(e.target.value)}
                 className="pl-10 pr-8 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none min-w-[150px] transition-all duration-200"
@@ -145,8 +147,7 @@ export const Warnings: React.FC = () => {
           {filteredWarnings.map((warning, index) => (
             <div
               key={warning.id}
-              className={`bg-slate-800/60 backdrop-blur-sm rounded-2xl border-l-4 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-slate-700 hover:border-slate-600 card-hover animate-fade-in-up ${getSeverityColor(warning.severity)}`}
-              style={{ animationDelay: `${0.2 + index * 0.1}s` }}
+              className={`bg-slate-800/60 backdrop-blur-sm rounded-2xl border-l-4 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-slate-700 hover:border-slate-600 card-hover animate-fade-in-up ${getSeverityColor(warning.severity)} delay-${index}`}
             >
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">

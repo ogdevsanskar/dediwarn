@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Globe, Server, Wifi, Activity, MapPin, Users, Zap, Shield } from 'lucide-react';
+import { Globe, Server, Wifi, Activity, MapPin, Zap, Shield } from 'lucide-react';
+import styles from './Network.module.css';
 
 export const Network: React.FC = () => {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export const Network: React.FC = () => {
     <div className="min-h-screen pt-8 pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-12 animate-fade-in-up">
+        <div className={`text-center mb-12 ${styles.fadeInUp}`}>
           <h1 className="text-4xl font-bold text-white mb-4">Global Network</h1>
           <p className="text-xl text-slate-400 max-w-2xl mx-auto">
             Monitor the decentralized warning network spanning across the globe
@@ -43,8 +44,7 @@ export const Network: React.FC = () => {
           ].map((stat, index) => (
             <div
               key={index}
-              className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 hover:border-slate-600 shadow-lg hover:shadow-2xl transition-all duration-300 hover:transform hover:-translate-y-1 animate-fade-in-up"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className={`bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 hover:border-slate-600 shadow-lg hover:shadow-2xl transition-all duration-300 hover:transform hover:-translate-y-1 ${styles.fadeInUp} ${styles[`networkStatDelay${index}`]}`}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 bg-gradient-to-r ${stat.color} rounded-lg`}>
@@ -59,14 +59,14 @@ export const Network: React.FC = () => {
         </div>
 
         {/* World Map Visualization */}
-        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 mb-8 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+        <div className={`bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 mb-8 ${styles.fadeInUp} ${styles.animateDelay5}`}>
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-white">Network Distribution</h3>
             <Globe className="h-5 w-5 text-blue-400" />
           </div>
           
           {/* Simplified world map representation */}
-          <div className="relative h-96 bg-slate-900 rounded-lg overflow-hidden">
+          <div className={`relative h-96 bg-slate-900 rounded-lg overflow-hidden ${styles.mapContainer}`}>
             <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-purple-900/20" />
             
             {/* Grid pattern */}
@@ -79,36 +79,34 @@ export const Network: React.FC = () => {
             </div>
             
             {/* Node markers */}
-            {networkNodes.map((node, index) => (
-              <div
-                key={node.id}
-                className={`absolute w-4 h-4 rounded-full cursor-pointer transition-all duration-300 hover:scale-150 animate-pulse ${
-                  node.status === 'online' ? 'bg-green-400' : 
-                  node.status === 'maintenance' ? 'bg-yellow-400' : 'bg-red-400'
-                }`}
-                style={{
-                  left: `${((node.lng + 180) / 360) * 100}%`,
-                  top: `${((90 - node.lat) / 180) * 100}%`,
-                  animationDelay: `${index * 0.2}s`
-                }}
-                onClick={() => setSelectedNode(node.id)}
-              />
-            ))}
+            {networkNodes.map((node, index) => {
+              const nodeLeft = ((node.lng + 180) / 360) * 100;
+              const nodeTop = ((90 - node.lat) / 180) * 100;
+              return (
+                <div
+                  key={node.id}
+                  className={`${styles.nodeMarker} ${styles[`animateDelay${index + 1}`]} ${
+                    node.status === 'online' ? styles.nodeOnline : 
+                    node.status === 'maintenance' ? styles.nodeMaintenance : styles.nodeOffline
+                  }`}
+                  data-node-left={nodeLeft}
+                  data-node-top={nodeTop}
+                  onClick={() => setSelectedNode(node.id)}
+                />
+              );
+            })}
             
             {/* Connection lines */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none">
               {networkNodes.map((node, index) => (
-                networkNodes.slice(index + 1).map((otherNode, otherIndex) => (
+                networkNodes.slice(index + 1).map((otherNode) => (
                   <line
                     key={`${node.id}-${otherNode.id}`}
                     x1={`${((node.lng + 180) / 360) * 100}%`}
                     y1={`${((90 - node.lat) / 180) * 100}%`}
                     x2={`${((otherNode.lng + 180) / 360) * 100}%`}
                     y2={`${((90 - otherNode.lat) / 180) * 100}%`}
-                    stroke="rgba(59, 130, 246, 0.3)"
-                    strokeWidth="1"
-                    className="animate-pulse"
-                    style={{ animationDelay: `${(index + otherIndex) * 0.1}s` }}
+                    className={styles.connectionLine}
                   />
                 ))
               ))}
@@ -117,7 +115,7 @@ export const Network: React.FC = () => {
         </div>
 
         {/* Node List */}
-        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-700 overflow-hidden animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+        <div className={`bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-700 overflow-hidden ${styles.fadeInUp} ${styles.animateDelay6}`}>
           <div className="px-6 py-4 border-b border-slate-700 bg-gradient-to-r from-blue-600/20 to-purple-600/20">
             <h3 className="text-lg font-semibold text-white">Network Nodes</h3>
           </div>
@@ -137,10 +135,9 @@ export const Network: React.FC = () => {
                 {networkNodes.map((node, index) => (
                   <tr 
                     key={node.id} 
-                    className={`hover:bg-slate-700/30 transition-colors animate-slide-in-left ${
-                      selectedNode === node.id ? 'bg-blue-600/10 border-l-4 border-l-blue-500' : ''
+                    className={`hover:bg-slate-700/30 transition-colors ${styles.slideInLeft} ${styles[`animateDelay${7 + index}`]} ${
+                      selectedNode === node.id ? styles.selectedRow : ''
                     }`}
-                    style={{ animationDelay: `${0.7 + index * 0.1}s` }}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3">
@@ -176,7 +173,7 @@ export const Network: React.FC = () => {
 
         {/* Network Performance */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-          <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+          <div className={`bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 ${styles.fadeInUp} ${styles.animateDelay8}`}>
             <h3 className="text-lg font-semibold text-white mb-4">Network Performance</h3>
             <div className="space-y-4">
               {[
@@ -185,18 +182,15 @@ export const Network: React.FC = () => {
                 { label: 'Error Rate', value: '0.03%', progress: 3 },
                 { label: 'Consensus Time', value: '2.1s', progress: 92 }
               ].map((metric, index) => (
-                <div key={index} className="animate-slide-in-left" style={{ animationDelay: `${0.9 + index * 0.1}s` }}>
+                <div key={index} className={`${styles.slideInLeft} ${styles[`animateDelay${9 + index}`]}`}>
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm text-slate-300">{metric.label}</span>
                     <span className="text-sm text-white font-medium">{metric.value}</span>
                   </div>
                   <div className="w-full bg-slate-700 rounded-full h-2">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-1000 animate-expand"
-                      style={{ 
-                        width: `${metric.progress}%`,
-                        animationDelay: `${1.0 + index * 0.1}s`
-                      }}
+                      className={`${styles.progressBar} ${styles[`animateDelay${10 + index}`]}`}
+                      data-progress-width={metric.progress}
                     />
                   </div>
                 </div>
@@ -204,7 +198,7 @@ export const Network: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 animate-fade-in-up" style={{ animationDelay: '0.9s' }}>
+          <div className={`bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 ${styles.fadeInUp} ${styles.animateDelay9}`}>
             <h3 className="text-lg font-semibold text-white mb-4">Recent Network Events</h3>
             <div className="space-y-3 max-h-64 overflow-y-auto">
               {[
@@ -216,8 +210,7 @@ export const Network: React.FC = () => {
               ].map((event, index) => (
                 <div
                   key={index}
-                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-700/50 transition-colors animate-slide-in-left"
-                  style={{ animationDelay: `${1.0 + index * 0.1}s` }}
+                  className={`flex items-center space-x-3 p-3 rounded-lg hover:bg-slate-700/50 transition-colors ${styles.slideInLeft} ${styles[`animateDelay${10 + index}`]}`}
                 >
                   <div className={`w-2 h-2 rounded-full animate-pulse ${
                     event.type === 'success' ? 'bg-green-400' :
