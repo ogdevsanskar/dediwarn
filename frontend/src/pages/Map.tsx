@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, AlertTriangle, Shield, Zap, Filter, Search, RefreshCw, Wifi, WifiOff } from 'lucide-react';
-import SatelliteMap from '../components/SatelliteMap';
 import { DisasterEvent } from '../services/disasterService';
 import { disasterService } from '../services/disasterService';
 import { API_CONFIG, checkApiConfiguration } from '../config/apiConfig';
+// import SatelliteMap from './components/SatelliteMap'; // Removed, using local component below
 
 export const Map: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<DisasterEvent | null>(null);
@@ -324,3 +324,73 @@ export const Map: React.FC = () => {
     </div>
   );
 };
+
+// SatelliteMap.tsx
+
+interface SatelliteMapProps {
+  events: DisasterEvent[];
+  selectedEvent: DisasterEvent | null;
+  onEventSelect: (event: DisasterEvent) => void;
+  className?: string;
+}
+
+const SatelliteMap: React.FC<SatelliteMapProps> = ({
+  events,
+  selectedEvent,
+  onEventSelect,
+  className
+}) => {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Load satellite data
+    loadSatelliteData();
+  }, []);
+
+  const loadSatelliteData = async () => {
+    try {
+      // Fetch satellite imagery or map data
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to load satellite data:', error);
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="satellite-map-loading">
+        Loading satellite view...
+      </div>
+    );
+  }
+
+  return (
+    <div className={`satellite-map ${className ?? ''}`}>
+      <div className="map-container">
+        {/* Integrate with mapping library like Leaflet, Google Maps, etc. */}
+        <div className="satellite-view">
+          Satellite Map View for Disaster Monitoring
+          {/* Example: Render event markers */}
+          {events.map(event => (
+            <div
+              key={event.id}
+              className={`event-marker${selectedEvent?.id === event.id ? ' selected' : ''}`}
+              onClick={() => onEventSelect(event)}
+            >
+              {event.title}
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      <div className="map-controls">
+        <button className="zoom-in">Zoom In</button>
+        <button className="zoom-out">Zoom Out</button>
+        <button className="reset-view">Reset View</button>
+      </div>
+    </div>
+  );
+};
+
+export default SatelliteMap; // Default export

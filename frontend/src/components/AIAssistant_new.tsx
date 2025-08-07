@@ -561,7 +561,7 @@ How can I help you stay safe today?`,
               <div className="flex space-x-1">
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce bounce-delay-1"></div>
                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce bounce-delay-2"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce bounce-delay-3"></div>
               </div>
             </div>
           </div>
