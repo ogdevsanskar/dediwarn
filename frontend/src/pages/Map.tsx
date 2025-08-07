@@ -1,9 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
 import { MapPin, Navigation, AlertTriangle, Shield, Zap, Filter, Search, RefreshCw, Wifi, WifiOff } from 'lucide-react';
 import { DisasterEvent } from '../services/disasterService';
 import { disasterService } from '../services/disasterService';
 import { API_CONFIG, checkApiConfiguration } from '../config/apiConfig';
-// import SatelliteMap from './components/SatelliteMap'; // Removed, using local component below
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default markers in React-Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+});
 
 export const Map: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<DisasterEvent | null>(null);
@@ -334,63 +344,209 @@ interface SatelliteMapProps {
   className?: string;
 }
 
+// SatelliteMap Component with Leaflet Implementation
+
+interface SatelliteMapProps {
+  events: DisasterEvent[];
+  selectedEvent: DisasterEvent | null;
+  onEventSelect: (event: DisasterEvent) => void;
+  className?: string;
+}
+
+// Create custom disaster icons
+const createDisasterIcon = (type: string, severity: string) => {
+  const colors = {
+    low: '#22c55e',
+    medium: '#f59e0b', 
+    high: '#f97316',
+    critical: '#ef4444'
+  };
+
+  const icons = {
+    earthquake: '🌋',
+    flood: '🌊', 
+    fire: '🔥',
+    storm: '⛈️',
+    emergency: '🚨'
+  };
+
+  return L.divIcon({
+    html: `
+      <div style="
+        background: ${colors[severity as keyof typeof colors] || colors.medium};
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        border: 3px solid white;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        animation: pulse 2s infinite;
+      ">
+        ${icons[type as keyof typeof icons] || '⚠️'}
+      </div>
+      <style>
+        @keyframes pulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+          100% { transform: scale(1); }
+        }
+      </style>
+    `,
+    className: 'custom-disaster-marker',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20]
+  });
+};
+
 const SatelliteMap: React.FC<SatelliteMapProps> = ({
   events,
   selectedEvent,
   onEventSelect,
   className
 }) => {
-  const [loading, setLoading] = useState(true);
+  const mapRef = useRef<L.Map>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+
+  // Default center coordinates (India)
+  const defaultCenter: [number, number] = [20.5937, 78.9629];
+  const defaultZoom = 5;
 
   useEffect(() => {
-    // Load satellite data
-    loadSatelliteData();
+    setMapLoaded(true);
   }, []);
 
-  const loadSatelliteData = async () => {
-    try {
-      // Fetch satellite imagery or map data
-      setLoading(false);
-    } catch (error) {
-      console.error('Failed to load satellite data:', error);
-      setLoading(false);
+  useEffect(() => {
+    // Focus on selected event
+    if (selectedEvent && mapRef.current) {
+      mapRef.current.setView(
+        [selectedEvent.location.lat, selectedEvent.location.lng], 
+        10,
+        { animate: true }
+      );
     }
-  };
+  }, [selectedEvent]);
 
-  if (loading) {
+  if (!mapLoaded) {
     return (
-      <div className="satellite-map-loading">
-        Loading satellite view...
+      <div className="flex items-center justify-center h-full bg-slate-800 rounded-lg">
+        <div className="text-center text-white">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p>Loading satellite map...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`satellite-map ${className ?? ''}`}>
-      <div className="map-container">
-        {/* Integrate with mapping library like Leaflet, Google Maps, etc. */}
-        <div className="satellite-view">
-          Satellite Map View for Disaster Monitoring
-          {/* Example: Render event markers */}
-          {events.map(event => (
-            <div
-              key={event.id}
-              className={`event-marker${selectedEvent?.id === event.id ? ' selected' : ''}`}
-              onClick={() => onEventSelect(event)}
-            >
-              {event.title}
-            </div>
-          ))}
+    <div className={`relative w-full h-full ${className || ''}`}>
+      <MapContainer
+        center={defaultCenter}
+        zoom={defaultZoom}
+        style={{ height: '100%', width: '100%' }}
+        ref={mapRef as any}
+        className="rounded-lg overflow-hidden"
+      >
+        {/* Satellite Tile Layer */}
+        <TileLayer
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          attribution='&copy; <a href="https://www.esri.com/">Esri</a>, Maxar, Earthstar Geographics'
+          maxZoom={18}
+        />
+        
+        {/* Street Map Overlay (Optional) */}
+        <TileLayer
+          url="https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"
+          attribution=""
+          opacity={0.5}
+        />
+
+        {/* Disaster Event Markers */}
+        {events.map((event) => (
+          <Marker
+            key={event.id}
+            position={[event.location.lat, event.location.lng]}
+            icon={createDisasterIcon(event.type, event.severity)}
+            eventHandlers={{
+              click: () => onEventSelect(event)
+            }}
+          >
+            <Popup className="disaster-popup">
+              <div className="p-3 max-w-sm">
+                <div className="flex items-center mb-2">
+                  <span className="text-lg mr-2">
+                    {event.type === 'earthquake' && '🌋'}
+                    {event.type === 'flood' && '🌊'}
+                    {event.type === 'fire' && '🔥'}
+                    {event.type === 'storm' && '⛈️'}
+                    {event.type === 'emergency' && '🚨'}
+                  </span>
+                  <span className={`px-2 py-1 rounded text-xs font-bold text-white ${
+                    event.severity === 'critical' ? 'bg-red-500' :
+                    event.severity === 'high' ? 'bg-orange-500' :
+                    event.severity === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                  }`}>
+                    {event.severity.toUpperCase()}
+                  </span>
+                </div>
+                
+                <h3 className="font-bold text-gray-800 mb-2">{event.title}</h3>
+                <p className="text-gray-600 text-sm mb-2">{event.description}</p>
+                <div className="text-xs text-gray-500 space-y-1">
+                  <div><strong>Location:</strong> {event.location.address}</div>
+                  <div><strong>Time:</strong> {new Date(event.timestamp).toLocaleString()}</div>
+                  <div><strong>Affected Area:</strong> {event.affectedArea} km²</div>
+                  {event.casualties && event.casualties > 0 && (
+                    <div className="text-red-600"><strong>Casualties:</strong> {event.casualties}</div>
+                  )}
+                  {event.evacuationRequired && (
+                    <div className="text-orange-600"><strong>⚠️ Evacuation Required</strong></div>
+                  )}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+
+      {/* Map Legend */}
+      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg z-[1000]">
+        <h4 className="font-bold text-sm mb-2">Legend</h4>
+        <div className="space-y-1 text-xs">
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+            <span>Low Severity</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
+            <span>Medium Severity</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-orange-500 rounded-full mr-2"></div>
+            <span>High Severity</span>
+          </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+            <span>Critical Severity</span>
+          </div>
         </div>
       </div>
-      
-      <div className="map-controls">
-        <button className="zoom-in">Zoom In</button>
-        <button className="zoom-out">Zoom Out</button>
-        <button className="reset-view">Reset View</button>
+
+      {/* Map Type Controls */}
+      <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm p-2 rounded-lg shadow-lg z-[1000]">
+        <div className="flex flex-col space-y-2">
+          <button className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors">
+            Satellite
+          </button>
+          <button className="px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition-colors">
+            Hybrid
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
-export default SatelliteMap; // Default export
+export default SatelliteMap;
