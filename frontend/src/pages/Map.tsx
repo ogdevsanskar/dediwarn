@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, AlertTriangle, Shield, Zap, Filter, Search, RefreshCw, Wifi, WifiOff } from 'lucide-react';
-import { SatelliteMap } from '../components/SatelliteMap';
-import { disasterService, DisasterEvent } from '../services/disasterService';
+import SatelliteMap from '../components/SatelliteMap';
+import { DisasterEvent } from '../services/disasterService';
+import { disasterService } from '../services/disasterService';
 import { API_CONFIG, checkApiConfiguration } from '../config/apiConfig';
 
 export const Map: React.FC = () => {

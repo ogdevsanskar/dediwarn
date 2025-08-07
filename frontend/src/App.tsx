@@ -10,6 +10,7 @@ import { Donations } from './pages/Donations';
 import { Volunteers } from './pages/Volunteers';
 import { Training } from './pages/Training';
 import { Map } from './pages/Map';
+import { MainDashboard } from './components/MainDashboard';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { AIAssistant } from './components/AIAssistant';
 import EmergencyCommunication from './components/EmergencyCommunication';
@@ -333,7 +334,8 @@ function App() {
         
         <main className={`relative z-10 ${!isOnline ? 'pt-12' : ''}`}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={<MainDashboard userLocation={userLocation} />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/warnings" element={<Warnings />} />
             <Route path="/contracts" element={<SmartContracts />} />
             <Route path="/analytics" element={<Analytics />} />

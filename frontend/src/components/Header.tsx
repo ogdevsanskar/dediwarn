@@ -9,6 +9,7 @@ export const Header: React.FC = () => {
   const location = useLocation();
 
   const mainNavItems = [
+    { name: 'Dashboard', path: '/' },
     { name: 'Map', path: '/map' },
     { name: 'Contracts', path: '/contracts' },
     { name: 'Network', path: '/network' },
@@ -16,6 +17,7 @@ export const Header: React.FC = () => {
   ];
 
   const additionalNavItems = [
+    { name: 'Original Home', path: '/home' },
     { name: 'Donations', path: '/donations' },
     { name: 'Volunteers', path: '/volunteers' },
     { name: 'Prediction', path: '/prediction' },
@@ -33,7 +35,7 @@ export const Header: React.FC = () => {
               <div className="absolute inset-0 bg-blue-500 opacity-20 rounded-full blur-lg group-hover:opacity-40 transition-opacity" />
             </div>
             <span className="text-lg font-bold text-white bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              DisasterGuard
+              DeDiWARN
             </span>
           </Link>          <nav className="hidden lg:flex items-center space-x-1">
             {mainNavItems.map((item, index) => (
