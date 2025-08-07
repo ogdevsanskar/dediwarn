@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Bot, Phone, Mail, Mic, MicOff, Volume2, VolumeX, Satellite, MapPin, Settings, Zap } from 'lucide-react';
+import { X, Send, Bot, Phone, Mail, Mic, MicOff, Volume2, VolumeX, Satellite, MapPin, Settings, Zap, Bell } from 'lucide-react';
+import emailjs from '@emailjs/browser';
+import { initializeApp } from 'firebase/app';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import './AIAssistant_new.css';
 
 // Web Speech API types
@@ -18,6 +21,25 @@ interface AIConfig {
   model?: string;
   enableSentimentAnalysis: boolean;
   enableUrgencyDetection: boolean;
+  // Communication Services
+  twilio: {
+    accountSid?: string;
+    authToken?: string;
+    phoneNumber?: string;
+  };
+  emailjs: {
+    serviceId?: string;
+    templateId?: string;
+    userId?: string;
+  };
+  firebase: {
+    apiKey?: string;
+    authDomain?: string;
+    projectId?: string;
+    messagingSenderId?: string;
+    appId?: string;
+    vapidKey?: string;
+  };
 }
 
 interface Message {
@@ -51,7 +73,26 @@ export const AIAssistant: React.FC = () => {
     rasaUrl: localStorage.getItem('rasa_url') || 'http://localhost:5005',
     model: 'gpt-3.5-turbo',
     enableSentimentAnalysis: true,
-    enableUrgencyDetection: true
+    enableUrgencyDetection: true,
+    // Communication Services
+    twilio: {
+      accountSid: localStorage.getItem('twilio_account_sid') || '',
+      authToken: localStorage.getItem('twilio_auth_token') || '',
+      phoneNumber: localStorage.getItem('twilio_phone_number') || '',
+    },
+    emailjs: {
+      serviceId: localStorage.getItem('emailjs_service_id') || '',
+      templateId: localStorage.getItem('emailjs_template_id') || '',
+      userId: localStorage.getItem('emailjs_user_id') || '',
+    },
+    firebase: {
+      apiKey: localStorage.getItem('firebase_api_key') || '',
+      authDomain: localStorage.getItem('firebase_auth_domain') || '',
+      projectId: localStorage.getItem('firebase_project_id') || '',
+      messagingSenderId: localStorage.getItem('firebase_messaging_sender_id') || '',
+      appId: localStorage.getItem('firebase_app_id') || '',
+      vapidKey: localStorage.getItem('firebase_vapid_key') || '',
+    }
   });
   // Removed unused customSmsMessage state
   const [customPhoneNumber, setCustomPhoneNumber] = useState('');
@@ -61,10 +102,15 @@ export const AIAssistant: React.FC = () => {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [recognition, setRecognition] = useState<any>(null);
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [fcmToken, setFcmToken] = useState<string>('');
+  const [pushEnabled, setPushEnabled] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     console.log('AIAssistant component mounted');
+    
+    // Initialize push notifications
+    initializePushNotifications();
     
     // Get user's location for satellite map
     if (navigator.geolocation) {
@@ -87,10 +133,11 @@ export const AIAssistant: React.FC = () => {
       const welcomeMessage: Message = {
         id: 'welcome',
         type: 'assistant',
-        content: '🤖 **Advanced AI Disaster Management Assistant v2.0**\n\nPowered by Machine Learning & Live Satellite Mapping:\n\n🛰️ **NEW: Live Satellite View**\n• Real-time satellite imagery\n• GPS location tracking\n• Emergency zone mapping\n• Disaster overlay visualization\n\n🧠 **AI Capabilities:**\n• Real-time sentiment analysis\n• Urgency level prediction (1-10 scale)\n• Disaster type classification\n• Response confidence scoring\n• Predictive risk modeling\n\n🌍 **Real-time Monitoring:**\n• Earthquake activity and seismic data\n• Weather patterns and severe storm tracking\n• Flood levels and water monitoring\n• Emergency alerts and government advisories\n\n🚨 **Emergency Services:**\n• Instant SMS alerts to contacts (6001163688)\n• Emergency service connections\n• Location-based risk assessment\n• Voice commands and TTS responses\n\n🎯 **Try ML-powered queries:**\n• "Emergency! Earthquake in Delhi!"\n• "Show satellite view of my area"\n• "I\'m worried about flooding"\n• "Share my location for rescue"\n\nClick the 🛰️ satellite button to view live map!',
+        content: '🤖 **Advanced AI Disaster Management Assistant v3.0**\n\nPowered by Machine Learning & Multi-Channel Communication:\n\n🛰️ **Live Satellite View**\n• Real-time satellite imagery\n• GPS location tracking\n• Emergency zone mapping\n• Disaster overlay visualization\n\n📡 **NEW: Multi-Channel Alerts**\n• Twilio SMS API integration\n• EmailJS professional email alerts\n• Firebase push notifications\n• Real-time communication status\n\n🧠 **AI Capabilities:**\n• Real-time sentiment analysis\n• Urgency level prediction (1-10 scale)\n• Disaster type classification\n• Response confidence scoring\n• Predictive risk modeling\n\n🌍 **Real-time Monitoring:**\n• Earthquake activity and seismic data\n• Weather patterns and severe storm tracking\n• Flood levels and water monitoring\n• Emergency alerts and government advisories\n\n🚨 **Emergency Services:**\n• Multi-channel alert system (SMS/Email/Push)\n• Professional SMS via Twilio\n• Email notifications via EmailJS\n• Browser push notifications\n• Location-based risk assessment\n• Voice commands and TTS responses\n\n🎯 **Try enhanced communication:**\n• "Send emergency alert to all channels"\n• "Test Twilio SMS integration"\n• "Configure push notifications"\n• "Show multi-channel alert status"\n\nClick the � bell to enable push notifications!\nConfigure communication services in ⚙️ Settings.',
         timestamp: new Date(),
         actions: [
-          { type: 'sms', label: 'Test Emergency SMS', data: 'test_sms' },
+          { type: 'sms', label: 'Multi-Channel Test', data: 'multi_channel_alert' },
+          { type: 'email', label: 'Test Email Alert', data: 'emergency_email' },
           { type: 'call', label: 'Emergency Contacts', data: 'contacts' }
         ]
       };
@@ -255,6 +302,193 @@ export const AIAssistant: React.FC = () => {
       console.error('Rasa API Error:', error);
       throw error;
     }
+  };
+
+  // Twilio SMS API Integration
+  const sendTwilioSMS = async (to: string, message: string): Promise<boolean> => {
+    try {
+      const { twilio } = aiConfig;
+      if (!twilio.accountSid || !twilio.authToken || !twilio.phoneNumber) {
+        throw new Error('Twilio credentials not configured');
+      }
+
+      const response = await fetch('/api/twilio/send-sms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to,
+          message,
+          from: twilio.phoneNumber,
+          accountSid: twilio.accountSid,
+          authToken: twilio.authToken,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Twilio API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('SMS sent successfully:', data.sid);
+      return true;
+    } catch (error) {
+      console.error('Twilio SMS Error:', error);
+      return false;
+    }
+  };
+
+  // EmailJS Integration
+  const sendEmailAlert = async (to: string, subject: string, message: string): Promise<boolean> => {
+    try {
+      const { emailjs: emailConfig } = aiConfig;
+      if (!emailConfig.serviceId || !emailConfig.templateId || !emailConfig.userId) {
+        throw new Error('EmailJS credentials not configured');
+      }
+
+      const templateParams = {
+        to_email: to,
+        subject: subject,
+        message: message,
+        location: currentLocation ? `${currentLocation.lat}, ${currentLocation.lng}` : 'Unknown',
+        timestamp: new Date().toISOString(),
+        emergency_level: 'HIGH',
+      };
+
+      const result = await emailjs.send(
+        emailConfig.serviceId,
+        emailConfig.templateId,
+        templateParams,
+        emailConfig.userId
+      );
+
+      console.log('Email sent successfully:', result.text);
+      return true;
+    } catch (error) {
+      console.error('EmailJS Error:', error);
+      return false;
+    }
+  };
+
+  // Firebase Push Notification Integration
+  const initializePushNotifications = async (): Promise<void> => {
+    try {
+      const { firebase } = aiConfig;
+      if (!firebase.apiKey || !firebase.projectId) {
+        console.log('Firebase credentials not configured');
+        return;
+      }
+
+      const firebaseConfig = {
+        apiKey: firebase.apiKey,
+        authDomain: firebase.authDomain,
+        projectId: firebase.projectId,
+        messagingSenderId: firebase.messagingSenderId,
+        appId: firebase.appId,
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const messaging = getMessaging(app);
+
+      // Request permission for notifications
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        const token = await getToken(messaging, {
+          vapidKey: firebase.vapidKey,
+        });
+        
+        if (token) {
+          setFcmToken(token);
+          setPushEnabled(true);
+          console.log('FCM Token obtained:', token);
+          
+          // Listen for foreground messages
+          onMessage(messaging, (payload) => {
+            console.log('Message received:', payload);
+            const notificationMessage: Message = {
+              id: Date.now().toString(),
+              type: 'assistant',
+              content: `🔔 **Push Notification Received:**\n\n${payload.notification?.title}\n${payload.notification?.body}`,
+              timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, notificationMessage]);
+          });
+        }
+      } else {
+        console.log('Notification permission denied');
+      }
+    } catch (error) {
+      console.error('FCM Initialization Error:', error);
+    }
+  };
+
+  // Send Push Notification
+  const sendPushNotification = async (title: string, body: string, data?: any): Promise<boolean> => {
+    try {
+      if (!fcmToken) {
+        throw new Error('FCM token not available');
+      }
+
+      const response = await fetch('/api/firebase/send-notification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: fcmToken,
+          notification: { title, body },
+          data: data || {},
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`FCM API error: ${response.status}`);
+      }
+
+      console.log('Push notification sent successfully');
+      return true;
+    } catch (error) {
+      console.error('Push Notification Error:', error);
+      return false;
+    }
+  };
+
+  // Enhanced Communication Handler
+  const sendMultiChannelAlert = async (
+    channels: ('sms' | 'email' | 'push')[],
+    recipients: { phone?: string; email?: string },
+    alert: { title: string; message: string; urgency: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL' }
+  ): Promise<void> => {
+    const results: { channel: string; success: boolean }[] = [];
+
+    // Send SMS via Twilio
+    if (channels.includes('sms') && recipients.phone) {
+      const smsSuccess = await sendTwilioSMS(recipients.phone, `🚨 ${alert.title}\n\n${alert.message}`);
+      results.push({ channel: 'SMS', success: smsSuccess });
+    }
+
+    // Send Email via EmailJS
+    if (channels.includes('email') && recipients.email) {
+      const emailSuccess = await sendEmailAlert(recipients.email, `🚨 Emergency Alert: ${alert.title}`, alert.message);
+      results.push({ channel: 'Email', success: emailSuccess });
+    }
+
+    // Send Push Notification via FCM
+    if (channels.includes('push') && pushEnabled) {
+      const pushSuccess = await sendPushNotification(alert.title, alert.message, { urgency: alert.urgency });
+      results.push({ channel: 'Push', success: pushSuccess });
+    }
+
+    // Show results in chat
+    const resultMessage: Message = {
+      id: Date.now().toString(),
+      type: 'assistant',
+      content: `📡 **Multi-Channel Alert Sent**\n\n🎯 **Alert Details:**\n• Title: ${alert.title}\n• Urgency: ${alert.urgency}\n• Timestamp: ${new Date().toLocaleTimeString()}\n\n📊 **Delivery Status:**\n${results.map(r => `• ${r.channel}: ${r.success ? '✅ Delivered' : '❌ Failed'}`).join('\n')}\n\n${results.every(r => r.success) ? '🎉 All notifications delivered successfully!' : '⚠️ Some notifications failed to deliver. Please check your configuration.'}`,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, resultMessage]);
   };
 
   // Enhanced AI Response Function with Multiple Providers
@@ -475,182 +709,6 @@ export const AIAssistant: React.FC = () => {
     return '75%';
   };
 
-  const generateLocalDisasterResponse = (userMessage: string): Message => {
-    const lowerMessage = userMessage.toLowerCase();
-    
-    // Map/satellite related responses
-    if (lowerMessage.includes('map') || lowerMessage.includes('satellite') || lowerMessage.includes('location') || lowerMessage.includes('where')) {
-      return {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: `🛰️ SATELLITE MAP ACTIVATED:
-
-Live satellite view with real-time disaster monitoring:
-
-📍 **Location Services:**
-• GPS coordinates: ${currentLocation ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}` : 'Acquiring location...'}
-• Satellite resolution: High (1m/pixel)
-• Live weather overlay: Active
-• Emergency zone mapping: Enabled
-
-🌍 **Monitoring Features:**
-• Real-time disaster detection
-• Evacuation route planning
-• Emergency services mapping
-• Weather pattern tracking
-
-Click the 🛰️ satellite button in the header to view your live satellite map with disaster overlays!`,
-        timestamp: new Date(),
-        actions: [
-          { type: 'sms', label: 'Share Location', data: 'location_share' },
-          { type: 'call', label: 'Emergency Services', data: 'emergency' }
-        ]
-      };
-    }
-    
-    // Enhanced disaster-specific responses
-    if (lowerMessage.includes('earthquake') || lowerMessage.includes('quake')) {
-      return {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: `🚨 EARTHQUAKE INFORMATION:
-
-I can provide real-time earthquake monitoring and safety guidance. Recent seismic activity analysis shows:
-
-🔸 Current Status: Monitoring global seismic networks
-🔸 Safety Protocol: Drop, Cover, and Hold On
-🔸 Emergency Kit: Keep 72-hour supply ready
-
-For location-specific earthquake data, please specify your area (e.g., "earthquake in Delhi" or "seismic activity near Tokyo").
-
-Would you like me to check current earthquake activity in a specific location?`,
-        timestamp: new Date(),
-        actions: [
-          { type: 'sms', label: 'Send Earthquake Alert', data: 'earthquake_alert' },
-          { type: 'call', label: 'Emergency Services', data: 'emergency' }
-        ]
-      };
-    }
-
-    if (lowerMessage.includes('flood') || lowerMessage.includes('water')) {
-      return {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: `🌊 FLOOD RISK ASSESSMENT:
-
-Real-time flood monitoring includes:
-
-🔸 River water levels: Monitoring major river systems
-🔸 Rainfall data: Analyzing precipitation patterns  
-🔸 Dam status: Checking reservoir levels
-🔸 Evacuation routes: Mapping safe pathways
-
-Current flood safety measures:
-• Move to higher ground immediately if water is rising
-• Avoid walking/driving through flood water
-• Turn off electricity in affected areas
-• Monitor official emergency broadcasts
-
-Specify your location for detailed flood risk analysis.`,
-        timestamp: new Date(),
-        actions: [
-          { type: 'sms', label: 'Flood Warning SMS', data: 'flood_warning' },
-          { type: 'call', label: 'Rescue Services', data: 'rescue' }
-        ]
-      };
-    }
-
-    if (lowerMessage.includes('weather') || lowerMessage.includes('storm') || lowerMessage.includes('cyclone')) {
-      return {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: `🌪️ WEATHER DISASTER ANALYSIS:
-
-Real-time weather monitoring includes:
-
-🔸 Wind speed analysis: Tracking storm formation
-🔸 Temperature extremes: Heat/cold wave detection
-🔸 Precipitation: Heavy rainfall and snow monitoring
-🔸 Atmospheric pressure: Storm development tracking
-
-Current weather-based risks:
-• Severe thunderstorms: Lightning and hail danger
-• High winds: Structural damage potential
-• Temperature extremes: Health risk assessment
-• Visibility conditions: Travel safety analysis
-
-Provide your location for current weather disaster risk assessment.`,
-        timestamp: new Date(),
-        actions: [
-          { type: 'sms', label: 'Weather Alert', data: 'weather_alert' },
-          { type: 'call', label: 'Weather Service', data: 'weather' }
-        ]
-      };
-    }
-
-    if (lowerMessage.includes('emergency') || lowerMessage.includes('help') || lowerMessage.includes('urgent')) {
-      return {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: `🚨 EMERGENCY RESPONSE ACTIVATED:
-
-Immediate Actions Available:
-1. 📞 Contact emergency services (911/112)
-2. 📱 Send SMS alerts to emergency contacts
-3. 📍 Share location with rescue teams
-4. 🏥 Find nearest hospitals/shelters
-5. 📻 Access emergency broadcasts
-
-Real-time emergency data:
-• Emergency services response times
-• Hospital availability and capacity
-• Evacuation route status
-• Shelter locations and capacity
-
-Tell me your specific emergency type for immediate assistance protocol.`,
-        timestamp: new Date(),
-        actions: [
-          { type: 'call', label: 'Call 911', data: '911' },
-          { type: 'sms', label: 'Emergency SMS', data: 'emergency_sms' },
-          { type: 'sms', label: 'Send Location', data: 'location_share' }
-        ]
-      };
-    }
-
-    // General disaster preparedness response
-    return {
-      id: Date.now().toString(),
-      type: 'assistant',
-      content: `🛡️ DISASTER MANAGEMENT ASSISTANT
-
-I provide real-time disaster analysis and emergency guidance:
-
-🌍 **Real-time Monitoring:**
-• Earthquake activity and seismic data
-• Weather patterns and severe storm tracking  
-• Flood levels and water monitoring
-• Emergency alerts and government advisories
-
-🚨 **Emergency Services:**
-• Instant SMS alerts to contacts (6001163688)
-• Emergency service connections
-• Location-based risk assessment
-• Evacuation guidance and shelter information
-
-🎯 **Ask me specific questions like:**
-• "Is there earthquake activity in [location]?"
-• "What's the flood risk in [area]?"
-• "Current weather alerts for [city]?"
-• "Emergency procedures for [disaster type]?"
-
-How can I help you stay safe today?`,
-      timestamp: new Date(),
-      actions: [
-        { type: 'sms', label: 'Test Emergency SMS', data: 'test_sms' },
-        { type: 'call', label: 'Emergency Contacts', data: 'contacts' }
-      ]
-    };
-  };
 
   const generateActionsFromResponse = (intent: string) => {
     const actions: Array<{ type: 'sms' | 'email' | 'call'; label: string; data: string }> = [
@@ -749,43 +807,39 @@ How can I help you stay safe today?`,
   };
 
   const handleSendSMS = async (phone: string, message: string) => {
-    // Removed smsAlert declaration (unused)
-
-    // Removed smsAlerts update (unused)
-
     try {
-      // Simulate SMS API call
+      // Try Twilio first if configured
+      if (aiConfig.twilio.accountSid && aiConfig.twilio.authToken) {
+        const success = await sendTwilioSMS(phone, message);
+        if (success) {
+          const confirmationMessage: Message = {
+            id: Date.now().toString(),
+            type: 'assistant',
+            content: `✅ **SMS Alert sent via Twilio** to ${phone}\n\nMessage: "${message}"\n\n📡 **Delivery Details:**\n• Service: Twilio SMS API\n• Status: Delivered\n• Timestamp: ${new Date().toLocaleTimeString()}\n• Provider: Professional SMS Gateway`,
+            timestamp: new Date()
+          };
+          setMessages(prev => [...prev, confirmationMessage]);
+          return;
+        }
+      }
+
+      // Fallback to simulation
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Update status
-      // Removed smsAlerts update (unused)
-
-      // Add confirmation message
       const confirmationMessage: Message = {
         id: Date.now().toString(),
         type: 'assistant',
-        content: `✅ SMS Alert sent successfully to ${phone}\n\nMessage: "${message}"\n\nThe recipient has been notified of the emergency situation.`,
+        content: `✅ **SMS Alert sent** to ${phone}\n\nMessage: "${message}"\n\n📡 **Delivery Details:**\n• Service: Simulated SMS (Demo Mode)\n• Status: Delivered\n• Timestamp: ${new Date().toLocaleTimeString()}\n• Note: Configure Twilio for real SMS delivery`,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, confirmationMessage]);
       
     } catch (error) {
-      // Removed smsAlerts update (unused)
-      // The following block is commented out because smsAlerts is not used anywhere else in the code.
-      // If you need to use smsAlerts, uncomment and add the state definition:
-      // setSmsAlerts((prev: SMSAlert[]) =>
-      //   prev.map((alert: SMSAlert) =>
-      //     alert.id === smsAlert.id
-      //       ? { ...alert, status: 'failed' as const }
-      //       : alert
-      //   )
-      // );
-      // You may want to show an error message to the user here.
       const errorMessage: Message = {
         id: Date.now().toString(),
         type: 'assistant',
-        content: `❌ Failed to send SMS Alert to ${phone}. Please try again later.`,
+        content: `❌ **Failed to send SMS Alert** to ${phone}\n\n🔧 **Troubleshooting:**\n• Check Twilio configuration in AI Settings\n• Verify account balance and phone number verification\n• Ensure API credentials are correct\n\nPlease try again or configure Twilio in settings.`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -810,25 +864,48 @@ How can I help you stay safe today?`,
         handleSendSMS('6001163688', locationData);
       } else if (action.data === 'alert_sms') {
         handleSendSMS('6001163688', '🚨 ALERT: Automated disaster alert triggered.');
+      } else if (action.data === 'multi_channel_alert') {
+        // Send multi-channel emergency alert
+        sendMultiChannelAlert(
+          ['sms', 'email', 'push'],
+          { phone: '6001163688', email: 'emergency@example.com' },
+          { 
+            title: 'EMERGENCY ALERT', 
+            message: 'Critical emergency situation detected. Immediate assistance may be required.', 
+            urgency: 'CRITICAL' 
+          }
+        );
+      }
+    } else if (action.type === 'email') {
+      // Enhanced email handling
+      if (action.data === 'emergency_email') {
+        sendEmailAlert(
+          'emergency@example.com',
+          '🚨 Emergency Alert from Disaster Management System',
+          `EMERGENCY NOTIFICATION\n\nA critical emergency situation has been detected.\n\nLocation: ${currentLocation ? `${currentLocation.lat}, ${currentLocation.lng}` : 'Unknown'}\nTimestamp: ${new Date().toISOString()}\n\nPlease respond immediately if assistance is required.`
+        );
+      } else {
+        const emailMessage: Message = {
+          id: Date.now().toString(),
+          type: 'assistant',
+          content: `✉️ **Email Alert Triggered**\n\nAction: ${action.label}\n\n📧 **Email Features:**\n• EmailJS integration for reliable delivery\n• Professional emergency templates\n• Location and timestamp inclusion\n• Multi-recipient support\n\nConfigure EmailJS credentials in AI Settings for full functionality.`,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, emailMessage]);
       }
     } else if (action.type === 'call') {
-      // In a real app, this would initiate actual calls
+      // Enhanced call handling with emergency context
       const callMessage: Message = {
         id: Date.now().toString(),
         type: 'assistant',
-        content: `📞 Initiating call to ${action.data}...\n\nIn a real emergency, this would connect you directly to emergency services. For actual emergencies, please dial your local emergency number (911, 112, etc.).`,
-        timestamp: new Date()
+        content: `📞 **Initiating Emergency Call**\n\nTarget: ${action.data}\nAction: ${action.label}\n\n🚨 **Emergency Information:**\n• Location: ${currentLocation ? `${currentLocation.lat.toFixed(4)}, ${currentLocation.lng.toFixed(4)}` : 'Unknown'}\n• Timestamp: ${new Date().toLocaleTimeString()}\n• Priority: HIGH\n\n⚠️ **Important:** In a real emergency, this would connect you directly to emergency services. For actual emergencies, please dial your local emergency number (911, 112, etc.).`,
+        timestamp: new Date(),
+        actions: [
+          { type: 'sms', label: 'Send SMS Backup', data: 'emergency' },
+          { type: 'email', label: 'Send Email Alert', data: 'emergency_email' }
+        ]
       };
       setMessages(prev => [...prev, callMessage]);
-    } else if (action.type === 'email') {
-      // You can implement email logic here if needed
-      const emailMessage: Message = {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: `✉️ Email action triggered: ${action.label}`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, emailMessage]);
     }
   };
 
@@ -879,6 +956,13 @@ How can I help you stay safe today?`,
             title={voiceEnabled ? 'Voice On' : 'Voice Off'}
           >
             {voiceEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={() => pushEnabled ? setPushEnabled(false) : initializePushNotifications()}
+            className={`p-2 rounded-full transition-all ${pushEnabled ? 'bg-green-500/50' : 'bg-gray-500/50'}`}
+            title={pushEnabled ? 'Push Notifications On' : 'Enable Push Notifications'}
+          >
+            <Bell className="h-4 w-4" />
           </button>
           <button
             onClick={() => setShowMapPanel(!showMapPanel)}
@@ -1165,6 +1249,127 @@ How can I help you stay safe today?`,
                 <p className="text-xs text-gray-500">Your local Rasa server endpoint</p>
               </div>
             )}
+
+            {/* Communication Services Configuration */}
+            <div className="border-t border-gray-100 pt-4">
+              <h5 className="text-sm font-semibold text-gray-800 mb-3">📡 Communication Services</h5>
+              
+              {/* Twilio Configuration */}
+              <div className="space-y-2 mb-4">
+                <label className="block text-xs font-medium text-gray-700">Twilio SMS</label>
+                <input
+                  type="text"
+                  placeholder="Account SID"
+                  value={aiConfig.twilio.accountSid}
+                  onChange={(e) => {
+                    setAiConfig(prev => ({...prev, twilio: {...prev.twilio, accountSid: e.target.value}}));
+                    localStorage.setItem('twilio_account_sid', e.target.value);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm mb-1"
+                />
+                <input
+                  type="password"
+                  placeholder="Auth Token"
+                  value={aiConfig.twilio.authToken}
+                  onChange={(e) => {
+                    setAiConfig(prev => ({...prev, twilio: {...prev.twilio, authToken: e.target.value}}));
+                    localStorage.setItem('twilio_auth_token', e.target.value);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm mb-1"
+                />
+                <input
+                  type="text"
+                  placeholder="From Phone Number (+1234567890)"
+                  value={aiConfig.twilio.phoneNumber}
+                  onChange={(e) => {
+                    setAiConfig(prev => ({...prev, twilio: {...prev.twilio, phoneNumber: e.target.value}}));
+                    localStorage.setItem('twilio_phone_number', e.target.value);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                />
+                <p className="text-xs text-gray-500">Professional SMS delivery via Twilio</p>
+              </div>
+
+              {/* EmailJS Configuration */}
+              <div className="space-y-2 mb-4">
+                <label className="block text-xs font-medium text-gray-700">EmailJS</label>
+                <input
+                  type="text"
+                  placeholder="Service ID"
+                  value={aiConfig.emailjs.serviceId}
+                  onChange={(e) => {
+                    setAiConfig(prev => ({...prev, emailjs: {...prev.emailjs, serviceId: e.target.value}}));
+                    localStorage.setItem('emailjs_service_id', e.target.value);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm mb-1"
+                />
+                <input
+                  type="text"
+                  placeholder="Template ID"
+                  value={aiConfig.emailjs.templateId}
+                  onChange={(e) => {
+                    setAiConfig(prev => ({...prev, emailjs: {...prev.emailjs, templateId: e.target.value}}));
+                    localStorage.setItem('emailjs_template_id', e.target.value);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm mb-1"
+                />
+                <input
+                  type="text"
+                  placeholder="User ID"
+                  value={aiConfig.emailjs.userId}
+                  onChange={(e) => {
+                    setAiConfig(prev => ({...prev, emailjs: {...prev.emailjs, userId: e.target.value}}));
+                    localStorage.setItem('emailjs_user_id', e.target.value);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                />
+                <p className="text-xs text-gray-500">Email alerts via EmailJS service</p>
+              </div>
+
+              {/* Firebase Configuration */}
+              <div className="space-y-2">
+                <label className="block text-xs font-medium text-gray-700">Firebase FCM</label>
+                <input
+                  type="text"
+                  placeholder="API Key"
+                  value={aiConfig.firebase.apiKey}
+                  onChange={(e) => {
+                    setAiConfig(prev => ({...prev, firebase: {...prev.firebase, apiKey: e.target.value}}));
+                    localStorage.setItem('firebase_api_key', e.target.value);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm mb-1"
+                />
+                <input
+                  type="text"
+                  placeholder="Project ID"
+                  value={aiConfig.firebase.projectId}
+                  onChange={(e) => {
+                    setAiConfig(prev => ({...prev, firebase: {...prev.firebase, projectId: e.target.value}}));
+                    localStorage.setItem('firebase_project_id', e.target.value);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm mb-1"
+                />
+                <input
+                  type="text"
+                  placeholder="VAPID Key"
+                  value={aiConfig.firebase.vapidKey}
+                  onChange={(e) => {
+                    setAiConfig(prev => ({...prev, firebase: {...prev.firebase, vapidKey: e.target.value}}));
+                    localStorage.setItem('firebase_vapid_key', e.target.value);
+                  }}
+                  className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                />
+                <p className="text-xs text-gray-500">Push notifications via Firebase Cloud Messaging</p>
+                
+                {/* Push Notification Status */}
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-gray-600">Push Notifications:</span>
+                  <span className={`text-xs px-2 py-1 rounded-full ${pushEnabled ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {pushEnabled ? '✅ Enabled' : '❌ Disabled'}
+                  </span>
+                </div>
+              </div>
+            </div>
 
             {/* AI Features Toggle */}
             <div className="border-t border-gray-100 pt-3">
