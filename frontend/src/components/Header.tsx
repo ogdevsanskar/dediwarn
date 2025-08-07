@@ -18,6 +18,8 @@ export const Header: React.FC = () => {
 
   const additionalNavItems = [
     { name: 'Original Home', path: '/home' },
+    { name: 'Analytics', path: '/analytics' },
+    { name: 'Admin Panel', path: '/admin' },
     { name: 'Donations', path: '/donations' },
     { name: 'Volunteers', path: '/volunteers' },
     { name: 'Prediction', path: '/prediction' },

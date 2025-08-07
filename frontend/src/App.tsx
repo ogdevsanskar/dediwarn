@@ -10,6 +10,7 @@ import { Donations } from './pages/Donations';
 import { Volunteers } from './pages/Volunteers';
 import { Training } from './pages/Training';
 import { Map } from './pages/Map';
+import { Dashboard } from './pages/Dashboard';
 import { MainDashboard } from './components/MainDashboard';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { AIAssistant } from './components/AIAssistant';
@@ -17,6 +18,9 @@ import EmergencyCommunication from './components/EmergencyCommunication';
 import DeviceCapabilities from './components/DeviceCapabilities';
 import LiveStreaming from './components/LiveStreaming';
 import { NotificationCenter } from './components/NotificationCenter';
+import AdminPanel from './components/AdminPanel.tsx';
+import VideoCallSystem from './components/VideoCallSystem';
+import { initializeButtonFunctionality } from './components/ButtonFunctionality';
 
 function App() {
   const [userLocation, setUserLocation] = useState({ lat: 0, lng: 0 });
@@ -26,6 +30,9 @@ function App() {
   const [showRoleSelector, setShowRoleSelector] = useState(false);
 
   useEffect(() => {
+    // Initialize button functionality
+    initializeButtonFunctionality();
+    
     // Initialize PWA features
     initializePWA();
     
@@ -336,14 +343,20 @@ function App() {
           <Routes>
             <Route path="/" element={<MainDashboard userLocation={userLocation} />} />
             <Route path="/home" element={<Home />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/warnings" element={<Warnings />} />
             <Route path="/contracts" element={<SmartContracts />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/admin" element={<AdminPanel />} />
             <Route path="/network" element={<Network />} />
             <Route path="/donations" element={<Donations />} />
             <Route path="/volunteers" element={<Volunteers />} />
             <Route path="/training" element={<Training />} />
             <Route path="/map" element={<Map />} />
+            <Route 
+              path="/video-call" 
+              element={<VideoCallSystem emergencyNumber="6001163688" />} 
+            />
             <Route 
               path="/emergency-communication" 
               element={

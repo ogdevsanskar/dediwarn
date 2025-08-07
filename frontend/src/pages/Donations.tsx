@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Heart, DollarSign, Users, Target, TrendingUp, Gift, CreditCard, Wallet, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Heart, DollarSign, Users, Target, TrendingUp, Gift, CreditCard, Wallet, AlertTriangle } from 'lucide-react';
 import { useWallet } from '../hooks/useWallet';
+import './Donations.css';
 
 interface Campaign {
   id: string;
@@ -17,7 +18,7 @@ interface Campaign {
 }
 
 export const Donations: React.FC = () => {
-  const { isConnected, account } = useWallet();
+  const { isConnected } = useWallet();
   const [selectedAmount, setSelectedAmount] = useState(50);
   const [customAmount, setCustomAmount] = useState('');
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(null);
@@ -130,8 +131,7 @@ export const Donations: React.FC = () => {
           ].map((stat, index) => (
             <div
               key={index}
-              className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 hover:border-slate-600 shadow-lg hover:shadow-2xl transition-all duration-300 hover:transform hover:-translate-y-1 animate-fade-in-up"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className={`bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 hover:border-slate-600 shadow-lg hover:shadow-2xl transition-all duration-300 hover:transform hover:-translate-y-1 animate-fade-in-up animation-delay-${index}`}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 bg-gradient-to-r ${stat.color} rounded-lg`}>
@@ -149,9 +149,7 @@ export const Donations: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           {campaigns.map((campaign, index) => (
             <div
-              key={campaign.id}
-              className="bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-700 overflow-hidden hover:border-slate-600 transition-all duration-300 hover:transform hover:scale-105 animate-fade-in-up"
-              style={{ animationDelay: `${0.5 + index * 0.1}s` }}
+            className={`bg-slate-800/60 backdrop-blur-sm rounded-2xl border border-slate-700 overflow-hidden hover:border-slate-600 transition-all duration-300 hover:transform hover:scale-105 animate-fade-in-up donation-card-delay-${index}`}
             >
               <div className="relative h-48 overflow-hidden">
                 <img 
@@ -182,8 +180,8 @@ export const Donations: React.FC = () => {
                   </div>
                   <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-1000"
-                      style={{ width: `${(campaign.raised / campaign.target) * 100}%` }}
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-1000 campaign-progress-bar"
+                      data-width={`${(campaign.raised / campaign.target) * 100}%`}
                     />
                   </div>
                   <div className="flex justify-between items-center mt-2 text-sm text-slate-400">
@@ -358,7 +356,7 @@ export const Donations: React.FC = () => {
         )}
 
         {/* Impact Section */}
-        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-700 animate-fade-in-up" style={{ animationDelay: '1s' }}>
+        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-8 border border-slate-700 animate-fade-in-up donations-impact-delay">
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-white mb-4">Your Impact</h2>
             <p className="text-slate-400 max-w-2xl mx-auto">

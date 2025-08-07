@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { BarChart3, PieChart, TrendingUp, MapPin, Calendar, Filter, Activity, Users, Globe, AlertTriangle } from 'lucide-react';
+import { TrendingUp, MapPin, Filter, Activity, Users, Globe, AlertTriangle } from 'lucide-react';
 import { LiveChart } from '../components/LiveChart';
+import './Analytics.css';
 
 export const Analytics: React.FC = () => {
   const [timeRange, setTimeRange] = useState('7d');
@@ -21,10 +22,10 @@ export const Analytics: React.FC = () => {
           <div>
             <h1 className="text-4xl font-bold text-white mb-2">Analytics Dashboard</h1>
             <p className="text-slate-400">Deep insights into warning system performance with live blockchain data</p>
-          </div>
           
           <div className="flex items-center space-x-4">
             <select
+              aria-label="Select time range"
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
               className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
@@ -47,12 +48,11 @@ export const Analytics: React.FC = () => {
           {metrics.map((metric, index) => (
             <div
               key={metric.id}
-              className={`p-6 rounded-xl border transition-all duration-300 cursor-pointer animate-fade-in-up card-hover ${
+              className={`p-6 rounded-xl border transition-all duration-300 cursor-pointer animate-fade-in-up card-hover animation-delay-${index} ${
                 selectedMetric === metric.id
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-blue-500 shadow-2xl'
                   : 'bg-slate-800/60 backdrop-blur-sm border-slate-700 hover:border-slate-600 hover:shadow-xl'
               }`}
-              style={{ animationDelay: `${index * 0.1}s` }}
               onClick={() => setSelectedMetric(metric.id)}
             >
               <div className="flex items-center justify-between mb-4">
@@ -76,26 +76,26 @@ export const Analytics: React.FC = () => {
         </div>
 
         {/* Live Charts Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+          <div className="animate-fade-in-up animation-delay-05s">
             <LiveChart 
               type="line" 
               title="Warning Trends (Live)" 
               height={300}
             />
           </div>
+          </div>
 
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+          <div className="animate-fade-in-up animation-delay-06s">
             <LiveChart 
               type="bar" 
               title="Severity Distribution" 
               height={300}
             />
           </div>
-        </div>
+        
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
-          <div className="animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+          <div className="animate-fade-in-up animation-delay-07s">
             <LiveChart 
               type="doughnut" 
               title="Warning Status" 
@@ -104,7 +104,7 @@ export const Analytics: React.FC = () => {
           </div>
 
           {/* Geographic Distribution */}
-          <div className="lg:col-span-2 bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 shadow-lg animate-fade-in-up" style={{ animationDelay: '0.8s' }}>
+          <div className="lg:col-span-2 bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 shadow-lg animate-fade-in-up animation-delay-08s">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-semibold text-white">Geographic Distribution</h3>
               <MapPin className="h-5 w-5 text-blue-400" />
@@ -118,18 +118,15 @@ export const Analytics: React.FC = () => {
                 { region: 'South America', percentage: 10, count: '125', color: 'from-yellow-500 to-orange-500' },
                 { region: 'Africa', percentage: 5, count: '62', color: 'from-red-500 to-pink-500' }
               ].map((region, index) => (
-                <div key={region.region} className="animate-slide-in-left" style={{ animationDelay: `${0.9 + index * 0.1}s` }}>
+                <div key={region.region} className={`animate-slide-in-left animation-delay-${index}`} >
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium text-white">{region.region}</span>
                     <span className="text-sm text-slate-400">{region.count} warnings</span>
                   </div>
                   <div className="w-full bg-slate-700 rounded-full h-3 overflow-hidden">
                     <div
-                      className={`bg-gradient-to-r ${region.color} h-3 rounded-full transition-all duration-1000 animate-expand`}
-                      style={{ 
-                        width: `${region.percentage}%`,
-                        animationDelay: `${1.0 + index * 0.1}s`
-                      }}
+                      className={`bg-gradient-to-r ${region.color} h-3 rounded-full transition-all duration-1000 animate-expand animation-delay-region-${index} region-bar`}
+                      data-width={region.percentage}
                     />
                   </div>
                 </div>
@@ -139,7 +136,7 @@ export const Analytics: React.FC = () => {
         </div>
 
         {/* Real-time Activity Feed */}
-        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 shadow-lg animate-fade-in-up" style={{ animationDelay: '1.0s' }}>
+        <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 shadow-lg animate-fade-in-up animation-delay-10s">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-white">Real-time Blockchain Activity</h3>
             <div className="flex items-center space-x-2">
@@ -160,8 +157,7 @@ export const Analytics: React.FC = () => {
             ].map((activity, index) => (
               <div
                 key={index}
-                className="flex items-center space-x-4 p-3 rounded-lg hover:bg-slate-700/50 transition-colors animate-slide-in-left"
-                style={{ animationDelay: `${1.1 + index * 0.1}s` }}
+                className={`flex items-center space-x-4 p-3 rounded-lg hover:bg-slate-700/50 transition-colors animate-slide-in-left activity-delay-${index}`}
               >
                 <div className={`w-3 h-3 rounded-full animate-pulse ${
                   activity.type === 'critical' ? 'bg-red-400' :
@@ -192,8 +188,7 @@ export const Analytics: React.FC = () => {
           ].map((metric, index) => (
             <div
               key={index}
-              className="bg-slate-800/60 backdrop-blur-sm rounded-xl p-6 border border-slate-700 hover:border-slate-600 transition-all duration-300 hover:transform hover:scale-105 animate-fade-in-up"
-              style={{ animationDelay: `${1.2 + index * 0.1}s` }}
+              className={`bg-slate-800/60 backdrop-blur-sm rounded-xl p-6 border border-slate-700 hover:border-slate-600 transition-all duration-300 hover:transform hover:scale-105 animate-fade-in-up performance-delay-${index}`}
             >
               <div className="flex items-center justify-between mb-4">
                 <metric.icon className="h-8 w-8 text-blue-400" />
