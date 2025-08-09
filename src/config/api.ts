@@ -48,6 +48,27 @@ export const API_CONFIG = {
 // Helper function to get full API URL
 export const getApiUrl = (endpoint: string) => `${API_CONFIG.BASE_URL}${endpoint}`;
 
+// Type definitions for API data
+export interface AlertData {
+  type: 'flood' | 'earthquake' | 'fire' | 'storm' | 'medical' | 'other';
+  location: string;
+  severity: 'low' | 'moderate' | 'high' | 'critical';
+  description: string;
+  coordinates?: { lat: number; lng: number };
+  timestamp?: string;
+}
+
+export interface ReportData {
+  type: 'incident' | 'resource_request' | 'volunteer_offer' | 'status_update';
+  title: string;
+  description: string;
+  location: string;
+  coordinates?: { lat: number; lng: number };
+  severity?: 'low' | 'moderate' | 'high' | 'critical';
+  contact?: string;
+  timestamp?: string;
+}
+
 // Helper function to get WebSocket URL
 export const getWsUrl = (path: string) => `${API_CONFIG.WS_URL}${path}`;
 
@@ -106,7 +127,7 @@ export class ApiClient {
     return this.request(API_CONFIG.ENDPOINTS.DISASTERS);
   }
 
-  async createAlert(alertData: any) {
+  async createAlert(alertData: AlertData) {
     return this.request(API_CONFIG.ENDPOINTS.ALERTS, {
       method: 'POST',
       body: JSON.stringify(alertData)
@@ -117,7 +138,7 @@ export class ApiClient {
     return this.request(API_CONFIG.ENDPOINTS.VOLUNTEERS);
   }
 
-  async submitReport(reportData: any) {
+  async submitReport(reportData: ReportData) {
     return this.request(API_CONFIG.ENDPOINTS.REPORTS, {
       method: 'POST',
       body: JSON.stringify(reportData)

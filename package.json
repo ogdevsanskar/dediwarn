@@ -2,7 +2,8 @@
   "name": "disaster-management-app",
   "private": true,
   "version": "1.0.0",
-  "description": "Disaster Management Application - Full Stack",
+  "type": "module",
+  "description": "Disaster Management Application - Full Stack (React + Express + TypeScript)",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"

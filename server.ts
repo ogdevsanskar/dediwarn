@@ -1,7 +1,61 @@
-import express = require('express');
-import cors = require('cors');
+import * as express from 'express';
+import * as cors from 'cors';
 import * as dotenv from 'dotenv';
 import axios from 'axios';
+
+// Type definitions for earthquake data
+interface EarthquakeFeature {
+  id: string;
+  geometry: {
+    coordinates: [number, number, number]; // [longitude, latitude, depth]
+  };
+  properties: {
+    mag: number;
+    place: string;
+    time: number;
+    url: string;
+  };
+}
+
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  error?: string;
+}
+
+interface EarthquakeData {
+  id: string;
+  magnitude: number;
+  location: string;
+  time: string;
+  coordinates: { lat: number; lon: number };
+  severity: string;
+  recommendation: string;
+  url: string;
+}
+
+interface WeatherData {
+  location: { name: string };
+  current: {
+    temperature: number;
+    windSpeed: number;
+    humidity: number;
+    description: string;
+  };
+  disaster_assessment: {
+    risk_level: string;
+    warnings: string[];
+    recommendations: string[];
+  };
+}
+
+interface FloodAlert {
+  location: string;
+  severity: string;
+  description: string;
+  issued_at: string;
+  recommendations: string[];
+}
 
 dotenv.config();
 
@@ -49,7 +103,7 @@ app.get('/api/disasters/earthquakes', async (req, res) => {
     
     // Filter by location if provided
     if (lat && lon) {
-      earthquakes = earthquakes.filter((quake: any) => {
+      earthquakes = earthquakes.filter((quake: EarthquakeFeature) => {
         const [quakeLon, quakeLat] = quake.geometry.coordinates;
         const distance = calculateDistance(
           parseFloat(lat as string), 
@@ -62,7 +116,7 @@ app.get('/api/disasters/earthquakes', async (req, res) => {
     }
     
     // Process and format data
-    const processedEarthquakes = earthquakes.slice(0, 10).map((quake: any) => {
+    const processedEarthquakes = earthquakes.slice(0, 10).map((quake: EarthquakeFeature) => {
       const magnitude = quake.properties.mag;
       const location = quake.properties.place;
       const time = new Date(quake.properties.time);
@@ -138,8 +192,8 @@ app.get('/api/disasters/weather', async (req, res) => {
     const weather = data.weather[0];
     
     let disasterRisk = 'Low';
-    let warnings: string[] = [];
-    let recommendations: string[] = [];
+    const warnings: string[] = [];
+    const recommendations: string[] = [];
     
     // Wind-based warnings
     if (windSpeed > 32) { // > 115 km/h
@@ -281,20 +335,23 @@ app.post('/api/ai/chat', async (req, res) => {
     let response = '';
     
     switch (intent.type) {
-      case 'earthquake':
+      case 'earthquake': {
         const earthquakeData = await getEarthquakeData(intent.location || location);
         response = formatEarthquakeResponse(earthquakeData, intent.location || location);
         break;
+      }
         
-      case 'weather':
+      case 'weather': {
         const weatherData = await getWeatherData(intent.location || location);
         response = formatWeatherResponse(weatherData, intent.location || location);
         break;
+      }
         
-      case 'flood':
+      case 'flood': {
         const floodAlerts = await getFloodAlerts(intent.location || location);
         response = formatFloodResponse(floodAlerts, intent.location || location);
         break;
+      }
         
       default:
         response = generateGeneralDisasterResponse(message);
@@ -351,11 +408,11 @@ function determineIntent(message: string) {
   return { type: 'general', location };
 }
 
-async function getEarthquakeData(location: string) {
+async function getEarthquakeData(_location: string) {
   try {
     const response = await axios.get(`http://localhost:${PORT}/api/disasters/earthquakes`);
     return response.data;
-  } catch (error) {
+  } catch (_error) {
     return { success: false, data: [] };
   }
 }
@@ -364,7 +421,7 @@ async function getWeatherData(location: string) {
   try {
     const response = await axios.get(`http://localhost:${PORT}/api/disasters/weather?city=${location}`);
     return response.data;
-  } catch (error) {
+  } catch (_error) {
     return { success: false, data: {} };
   }
 }
@@ -373,12 +430,12 @@ async function getFloodAlerts(location: string) {
   try {
     const response = await axios.get(`http://localhost:${PORT}/api/disasters/alerts?type=flood&location=${location}`);
     return response.data;
-  } catch (error) {
+  } catch (_error) {
     return { success: false, data: [] };
   }
 }
 
-function formatEarthquakeResponse(data: any, location: string): string {
+function formatEarthquakeResponse(data: ApiResponse<EarthquakeData[]>, location: string): string {
   if (!data.success || data.data.length === 0) {
     return `No significant earthquake activity detected in ${location || 'your area'} recently. Current seismic conditions appear stable. I recommend staying informed through official channels and having an emergency kit ready.`;
   }
@@ -396,7 +453,7 @@ function formatEarthquakeResponse(data: any, location: string): string {
 Stay safe and monitor official emergency channels for updates.`;
 }
 
-function formatWeatherResponse(data: any, location: string): string {
+function formatWeatherResponse(data: ApiResponse<WeatherData>, location: string): string {
   if (!data.success) {
     return `Unable to fetch current weather data for ${location}. Please check the location name and try again.`;
   }
@@ -428,7 +485,7 @@ function formatWeatherResponse(data: any, location: string): string {
   return response;
 }
 
-function formatFloodResponse(data: any, location: string): string {
+function formatFloodResponse(data: ApiResponse<FloodAlert[]>, location: string): string {
   if (!data.success || data.data.length === 0) {
     return `No active flood alerts for ${location}. Current flood risk appears low. Continue monitoring weather conditions and water levels.`;
   }
@@ -447,7 +504,7 @@ ${alert.recommendations.map((rec: string) => `• ${rec}`).join('\n')}
 Stay vigilant and follow local emergency instructions.`;
 }
 
-function generateGeneralDisasterResponse(message: string): string {
+function generateGeneralDisasterResponse(_message: string): string {
   return `Thank you for your question. I'm equipped to provide real-time disaster information including:
 
 🌍 Earthquake monitoring and analysis

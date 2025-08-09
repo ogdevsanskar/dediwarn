@@ -7,6 +7,9 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  build: {
+    chunkSizeWarningLimit: 1500 // Increase limit to 1.5MB to suppress warning
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,
