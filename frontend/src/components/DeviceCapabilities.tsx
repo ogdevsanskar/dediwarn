@@ -1,10 +1,39 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Camera, Activity, Upload, QrCode } from 'lucide-react';
 
+interface DamageReport {
+  type: string;
+  location: LocationData | null;
+  timestamp: number;
+  environmentalData?: EnvironmentalData | null;
+  image?: Blob;
+  video?: Blob;
+  file?: File;
+  id?: string;
+  description?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  images?: string[];
+  qrCode?: string;
+}
+
+interface BatteryInfo {
+  level: number;
+  charging: boolean;
+  chargingTime?: number;
+  dischargingTime?: number;
+}
+
+interface NetworkInfo {
+  effectiveType: string;
+  downlink: number;
+  rtt: number;
+  saveData?: boolean;
+}
+
 interface DeviceCapabilitiesProps {
   onLocationUpdate: (location: { lat: number; lng: number; accuracy: number }) => void;
-  onDamageReport: (report: any) => void;
-  onEnvironmentalData: (data: any) => void;
+  onDamageReport: (report: DamageReport) => void;
+  onEnvironmentalData: (data: EnvironmentalData) => void;
 }
 
 interface LocationData {
@@ -18,17 +47,21 @@ interface LocationData {
 }
 
 interface EnvironmentalData {
-  deviceMotion: {
+  deviceMotion?: {
     acceleration: { x: number; y: number; z: number };
     rotation: { alpha: number; beta: number; gamma: number };
   };
   ambientLight?: number;
   battery?: { level: number; charging: boolean };
-  networkInfo: {
+  networkInfo?: {
     effectiveType: string;
     downlink: number;
     rtt: number;
   };
+  type?: string;
+  timestamp?: number;
+  magnitude?: number;
+  location?: LocationData | null;
 }
 
 const DeviceCapabilities: React.FC<DeviceCapabilitiesProps> = ({
@@ -42,8 +75,8 @@ const DeviceCapabilities: React.FC<DeviceCapabilitiesProps> = ({
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [environmentalData, setEnvironmentalData] = useState<EnvironmentalData | null>(null);
-  const [batteryInfo, setBatteryInfo] = useState<any>(null);
-  const [networkInfo, setNetworkInfo] = useState<any>(null);
+  const [batteryInfo, setBatteryInfo] = useState<BatteryInfo | null>(null);
+  const [networkInfo, setNetworkInfo] = useState<NetworkInfo | null>(null);
   const [qrScanResult, setQrScanResult] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
 
@@ -67,12 +100,14 @@ const DeviceCapabilities: React.FC<DeviceCapabilitiesProps> = ({
       window.removeEventListener('devicemotion', handleDeviceMotion);
       window.removeEventListener('deviceorientation', handleDeviceOrientation);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const initializeDeviceCapabilities = async () => {
     // Battery API
     if ('getBattery' in navigator) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const battery = await (navigator as any).getBattery();
         setBatteryInfo({
           level: battery.level,
@@ -91,6 +126,7 @@ const DeviceCapabilities: React.FC<DeviceCapabilitiesProps> = ({
 
     // Network Information API
     if ('connection' in navigator) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const connection = (navigator as any).connection;
       setNetworkInfo({
         effectiveType: connection.effectiveType,
@@ -105,7 +141,9 @@ const DeviceCapabilities: React.FC<DeviceCapabilitiesProps> = ({
     // Device Motion API
     if ('DeviceMotionEvent' in window) {
       // Request permission for iOS 13+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (typeof (DeviceMotionEvent as any).requestPermission === 'function') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const permission = await (DeviceMotionEvent as any).requestPermission();
         if (permission === 'granted') {
           startMotionTracking();
@@ -118,6 +156,7 @@ const DeviceCapabilities: React.FC<DeviceCapabilitiesProps> = ({
     // Ambient Light API
     if ('AmbientLightSensor' in window) {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const sensor = new (window as any).AmbientLightSensor();
         sensor.addEventListener('reading', () => {
           setEnvironmentalData(prev => ({
@@ -133,6 +172,7 @@ const DeviceCapabilities: React.FC<DeviceCapabilitiesProps> = ({
   };
 
   const updateBatteryInfo = (event: Event) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const battery = event.target as any;
     setBatteryInfo({
       level: battery.level,
@@ -143,6 +183,7 @@ const DeviceCapabilities: React.FC<DeviceCapabilitiesProps> = ({
   };
 
   const updateNetworkInfo = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const connection = (navigator as any).connection;
     setNetworkInfo({
       effectiveType: connection.effectiveType,
@@ -359,6 +400,7 @@ const DeviceCapabilities: React.FC<DeviceCapabilitiesProps> = ({
         const blob = new Blob(chunks, { type: 'video/webm' });
         
         const report = {
+          type: 'video_report',
           video: blob,
           location,
           timestamp: Date.now(),

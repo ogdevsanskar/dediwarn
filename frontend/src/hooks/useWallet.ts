@@ -1,5 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
+
+interface WalletError {
+  message?: string;
+  code?: number;
+}
+
+interface EthereumProvider {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  selectedAddress?: string;
+  chainId?: string;
+  isMetaMask?: boolean;
+  on?: (event: string, callback: (...args: unknown[]) => void) => void;
+  removeAllListeners?: (event: string) => void;
+}
 
 interface WalletState {
   account: string | null;
@@ -37,7 +51,7 @@ export const useWallet = () => {
     try {
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts',
-      });
+      }) as string[];
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
@@ -56,11 +70,12 @@ export const useWallet = () => {
       });
 
       localStorage.setItem('walletConnected', 'true');
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const walletError = error as WalletError;
       setWalletState(prev => ({
         ...prev,
         isConnecting: false,
-        error: error.message || 'Failed to connect wallet',
+        error: walletError.message || 'Failed to connect wallet',
       }));
     }
   }, []);
@@ -87,8 +102,9 @@ export const useWallet = () => {
         method: 'wallet_switchEthereumChain',
         params: [{ chainId: `0x${chainId.toString(16)}` }],
       });
-    } catch (error: any) {
-      if (error.code === 4902) {
+    } catch (error: unknown) {
+      const walletError = error as WalletError;
+      if (walletError.code === 4902) {
         // Network not added to MetaMask
         setWalletState(prev => ({
           ...prev,
@@ -108,7 +124,8 @@ export const useWallet = () => {
     checkConnection();
 
     if (window.ethereum) {
-      window.ethereum.on('accountsChanged', (accounts: string[]) => {
+      window.ethereum?.on?.('accountsChanged', (...args: unknown[]) => {
+        const accounts = args[0] as string[];
         if (accounts.length === 0) {
           disconnectWallet();
         } else {
@@ -116,15 +133,15 @@ export const useWallet = () => {
         }
       });
 
-      window.ethereum.on('chainChanged', () => {
+      window.ethereum?.on?.('chainChanged', () => {
         window.location.reload();
       });
     }
 
     return () => {
       if (window.ethereum) {
-        window.ethereum.removeAllListeners('accountsChanged');
-        window.ethereum.removeAllListeners('chainChanged');
+        window.ethereum?.removeAllListeners?.('accountsChanged');
+        window.ethereum?.removeAllListeners?.('chainChanged');
       }
     };
   }, [connectWallet, disconnectWallet]);
@@ -141,6 +158,6 @@ export const useWallet = () => {
 
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: EthereumProvider;
   }
 }

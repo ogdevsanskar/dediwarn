@@ -416,8 +416,6 @@ export const CommunityReportingDashboard: React.FC<CommunityReportingDashboardPr
     </div>
   );
 
-  /* eslint-disable @typescript-eslint/no-unused-vars */
-
   // Helper to get priority icon
   function getPriorityIcon(priority: string) {
     switch (priority) {

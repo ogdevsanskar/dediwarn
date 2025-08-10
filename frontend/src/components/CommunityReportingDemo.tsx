@@ -22,7 +22,6 @@ export const CommunityReportingDemo: React.FC<CommunityReportingDemoProps> = ({
 }) => {
   const [activeDemo, setActiveDemo] = useState('overview');
   const [analytics, setAnalytics] = useState<ReportingAnalytics | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   // Removed unused recentReports state
   const [loading, setLoading] = useState(false);
 
