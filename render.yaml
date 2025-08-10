@@ -5,6 +5,7 @@ services:
     env: static
     buildCommand: npm run build:frontend
     staticPublishPath: ./frontend/dist
+    rootDir: ./
     routes:
       - type: rewrite
         source: /api/*
@@ -20,6 +21,7 @@ services:
     plan: free
     buildCommand: npm run build:backend
     startCommand: npm run start:backend
+    rootDir: ./
     envVars:
       - key: NODE_ENV
         value: production
