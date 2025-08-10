@@ -3,7 +3,7 @@ services:
   - type: web
     name: disaster-management-frontend
     env: static
-    buildCommand: npm run build:frontend
+    buildCommand: cd frontend && npm install && npm run build
     staticPublishPath: ./frontend/dist
     rootDir: ./
     routes:
