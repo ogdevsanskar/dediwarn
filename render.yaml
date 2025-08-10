@@ -3,9 +3,12 @@ services:
   - type: web
     name: disaster-management-frontend
     env: static
-    buildCommand: cd frontend && npm install && npm run build
+    buildCommand: ./build.sh
     staticPublishPath: ./frontend/dist
     rootDir: ./
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.0
     routes:
       - type: rewrite
         source: /api/*
@@ -25,6 +28,8 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: NODE_VERSION
+        value: 20.11.0
       - key: PORT
         value: 10000
     healthCheckPath: /api/status

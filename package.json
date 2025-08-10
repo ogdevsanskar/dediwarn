@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Disaster Management Application - Full Stack (React + Express + TypeScript)",
   "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
+    "node": ">=20.11.0",
+    "npm": ">=10.0.0"
   },
   "scripts": {
     "install:frontend": "cd frontend && npm install",
