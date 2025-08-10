@@ -1,67 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, Camera, Activity, Upload, QrCode } from 'lucide-react';
-
-interface DamageReport {
-  type: string;
-  location: LocationData | null;
-  timestamp: number;
-  environmentalData?: EnvironmentalData | null;
-  image?: Blob;
-  video?: Blob;
-  file?: File;
-  id?: string;
-  description?: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
-  images?: string[];
-  qrCode?: string;
-}
-
-interface BatteryInfo {
-  level: number;
-  charging: boolean;
-  chargingTime?: number;
-  dischargingTime?: number;
-}
-
-interface NetworkInfo {
-  effectiveType: string;
-  downlink: number;
-  rtt: number;
-  saveData?: boolean;
-}
+import { LocationData, DamageReport, EnvironmentalData, BatteryInfo, NetworkInfo } from '../types';
 
 interface DeviceCapabilitiesProps {
   onLocationUpdate: (location: { lat: number; lng: number; accuracy: number }) => void;
   onDamageReport: (report: DamageReport) => void;
   onEnvironmentalData: (data: EnvironmentalData) => void;
-}
-
-interface LocationData {
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  altitude?: number;
-  heading?: number;
-  speed?: number;
-  timestamp: number;
-}
-
-interface EnvironmentalData {
-  deviceMotion?: {
-    acceleration: { x: number; y: number; z: number };
-    rotation: { alpha: number; beta: number; gamma: number };
-  };
-  ambientLight?: number;
-  battery?: { level: number; charging: boolean };
-  networkInfo?: {
-    effectiveType: string;
-    downlink: number;
-    rtt: number;
-  };
-  type?: string;
-  timestamp?: number;
-  magnitude?: number;
-  location?: LocationData | null;
 }
 
 const DeviceCapabilities: React.FC<DeviceCapabilitiesProps> = ({

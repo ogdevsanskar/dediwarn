@@ -1,12 +1,8 @@
 {
   "files": [],
   "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    },
-    "forceConsistentCasingInFileNames": true,
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "allowJs": true,
     "esModuleInterop": true,
@@ -14,7 +10,14 @@
     "moduleResolution": "node"
   },
   "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
+    { "path": "./frontend" },
+    { "path": "./backend" }
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "frontend",
+    "backend",
+    "**/*.js"
   ]
 }

@@ -26,56 +26,7 @@ import CrowdsourcedReporting from './pages/CrowdsourcedReporting';
 import EnhancedDashboard from './pages/EnhancedDashboard';
 import EducationGamification from './pages/EducationGamification';
 import { initializeButtonFunctionality } from './components/ButtonFunctionality';
-
-// Type definitions
-interface AppNotification {
-  id: number;
-  type: 'emergency_alert' | 'app_update' | 'app_install' | 'offline_report' | 'report_sent' | 'success' | 'warning' | 'error' | 'info';
-  title: string;
-  message: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
-  timestamp: string;
-  location?: { lat: number; lng: number };
-  actions?: Array<{ label: string; action: () => void }>;
-  read?: boolean;
-}
-
-interface DamageReport {
-  type: string;
-  location: {
-    lat: number;
-    lng: number;
-  };
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  images?: File[];
-  userId: string;
-  timestamp: number;
-}
-
-interface EnvironmentalData {
-  temperature?: number;
-  humidity?: number;
-  airQuality?: number;
-  windSpeed?: number;
-  rainfall?: number;
-  location: {
-    lat: number;
-    lng: number;
-  };
-}
-
-interface EmergencyAlert {
-  title?: string;
-  description?: string;
-  message?: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
-  location?: {
-    lat: number;
-    lng: number;
-  };
-  actions?: Array<{ label: string; action: () => void }>;
-}
+import { AppNotification, DamageReport, EnvironmentalData, EmergencyAlert } from './types';
 
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -251,15 +202,15 @@ function App() {
       const formData = new FormData();
       
       // Add basic report data
-      formData.append('type', report.type);
-      formData.append('description', report.description);
-      formData.append('severity', report.severity);
-      formData.append('userId', report.userId);
-      formData.append('timestamp', report.timestamp.toString());
-      formData.append('location', JSON.stringify(report.location));
+      if (report.type) formData.append('type', report.type);
+      if (report.description) formData.append('description', report.description);
+      if (report.severity) formData.append('severity', report.severity);
+      if (report.userId) formData.append('userId', report.userId);
+      if (report.timestamp) formData.append('timestamp', report.timestamp.toString());
+      if (report.location) formData.append('location', JSON.stringify(report.location));
       
       // Add images if present
-      if (report.images) {
+      if (report.images && report.images.length > 0) {
         report.images.forEach((image, index) => {
           formData.append(`image_${index}`, image);
         });
