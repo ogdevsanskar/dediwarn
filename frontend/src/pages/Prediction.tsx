@@ -13,7 +13,7 @@ interface DisasterPrediction {
   affectedPopulation: number;
   confidence: number;
   lastUpdated: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   color: string;
 }
 

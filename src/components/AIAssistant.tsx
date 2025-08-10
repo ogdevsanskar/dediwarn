@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 // import { X, Send, Bot, Phone, Mail, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.MODE === 'production' 
   ? 'https://your-production-api.com' 
   : 'http://localhost:3001';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ENDPOINTS = {
   // Disaster management endpoints
   EMERGENCY_ALERTS: '/api/alerts',
@@ -17,8 +18,8 @@ export const ENDPOINTS = {
 // Web Speech API types
 declare global {
   interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
+    SpeechRecognition: unknown;
+    webkitSpeechRecognition: unknown;
   }
 }
 
@@ -86,7 +87,17 @@ export const AIAssistant = () => {
   useEffect(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
+      const recognitionInstance = new (SpeechRecognition as new () => {
+        continuous: boolean;
+        interimResults: boolean;
+        lang: string;
+        onstart: (() => void) | null;
+        onend: (() => void) | null;
+        onresult: ((event: { results: { transcript: string }[][] }) => void) | null;
+        onerror: ((event: { error: string }) => void) | null;
+        start: () => void;
+        stop: () => void;
+      })();
       
       recognitionInstance.continuous = false;
       recognitionInstance.interimResults = false;
@@ -100,7 +111,7 @@ export const AIAssistant = () => {
         // setIsListening(false);
       };
       
-      recognitionInstance.onresult = (event: any) => {
+      recognitionInstance.onresult = (event: { results: { transcript: string }[][] }) => {
         const transcript = event.results[0][0].transcript;
         setInputMessage(transcript);
         // Auto-send voice commands
@@ -109,7 +120,7 @@ export const AIAssistant = () => {
         }, 500);
       };
       
-      recognitionInstance.onerror = (event: any) => {
+      recognitionInstance.onerror = (event: { error: string }) => {
         console.error('Speech recognition error:', event.error);
         // setIsListening(false);
       };
@@ -117,9 +128,18 @@ export const AIAssistant = () => {
       // setRecognition(recognitionInstance);
       // If you want to use recognitionInstance, assign it to a ref or use it directly here.
     }
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  const speakMessage = useCallback((content: string) => {
+    if (!('speechSynthesis' in window)) return;
+    const utterance = new window.SpeechSynthesisUtterance(content);
+    utterance.lang = 'en-US';
+    utterance.onend = () => {};
+    utterance.onerror = () => {};
+    window.speechSynthesis.speak(utterance);
   }, []);
 
-  const simulateAIResponse = async (userMessage: string): Promise<Message> => {
+  const simulateAIResponse = useCallback(async (userMessage: string): Promise<Message> => {
     try {
       // Call backend AI chat API for real-time analysis
       const response = await fetch(`${API_BASE_URL}${ENDPOINTS.AI_ASSISTANT}`, {
@@ -148,7 +168,7 @@ export const AIAssistant = () => {
   
     // Fallback to enhanced local responses with disaster focus
     return generateLocalDisasterResponse(userMessage);
-  };
+  }, []);
 
   // Helper to generate actions from AI response intent/location
   const generateActionsFromResponse = (
@@ -181,7 +201,7 @@ export const AIAssistant = () => {
   };
 
   // Handles sending a user message (from input or voice)
-  const handleSendMessage = async (messageText?: string) => {
+  const handleSendMessage = useCallback(async (messageText?: string) => {
     const message = messageText || inputMessage.trim();
     if (!message) return;
 
@@ -205,7 +225,7 @@ export const AIAssistant = () => {
         speakMessage(aiResponse.content);
       }
     }, 1000);
-  };
+  }, [inputMessage, voiceEnabled, simulateAIResponse, speakMessage]);
   function generateLocalDisasterResponse(userMessage: string): Message {
     const lower = userMessage.toLowerCase();
     let content = "I'm sorry, I couldn't fetch real-time data right now. But I can still help with general disaster safety tips and guidance.";
@@ -254,14 +274,6 @@ export const AIAssistant = () => {
       actions: actions.length > 0 ? actions : undefined
     };
   }
-    function speakMessage(content: string) {
-      if (!('speechSynthesis' in window)) return;
-      const utterance = new window.SpeechSynthesisUtterance(content);
-      utterance.lang = 'en-US';
-      utterance.onend = () => {};
-      utterance.onerror = () => {};
-      window.speechSynthesis.speak(utterance);
-    }
   
     // You should return your JSX here (replace with your actual UI)
     return (

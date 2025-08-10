@@ -176,11 +176,12 @@ const VideoCallSystem: React.FC<VideoCallSystemProps> = ({
       }
       document.removeEventListener('keydown', handleKeyDown);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Security: Input sanitization
   const sanitizeInput = (input: string): string => {
-    return input.replace(/[<>\"']/g, '').trim();
+    return input.replace(/[<>"']/g, '').trim();
   };
 
   // Security: Rate limiting for calls
@@ -407,30 +408,37 @@ const VideoCallSystem: React.FC<VideoCallSystemProps> = ({
   };
 
   // Handle AI Risk Assessment emergency actions
-  const handleAIEmergencyAction = (action: string, data: any) => {
+  const handleAIEmergencyAction = (action: string, data: unknown) => {
+    const parsedData = data as Record<string, unknown>;
+    
     switch (action) {
       case 'prepare-for-disaster':
-        console.log('Preparing for disaster:', data);
+        console.log('Preparing for disaster:', parsedData);
         // Trigger preparation protocols
-        if (data.probability > 70) {
+        if (typeof parsedData.probability === 'number' && parsedData.probability > 70) {
           setIsPanicMode(true);
           onPanicActivated?.();
         }
         break;
       
       case 'follow-recommendation':
-        console.log('Following AI recommendation:', data);
+        console.log('Following AI recommendation:', parsedData);
         setAiRecommendations(prev => prev + 1);
         // Execute recommendation actions
-        if (data.category === 'evacuate') {
+        if (parsedData.category === 'evacuate') {
           handleEmergencyCall();
         }
         break;
       
       case 'use-evacuation-route':
-        console.log('Using evacuation route:', data);
+        console.log('Using evacuation route:', parsedData);
         // Open navigation or emergency contacts
-        onLocationShared?.(data.startPoint);
+        if (parsedData.startPoint && typeof parsedData.startPoint === 'object') {
+          const location = parsedData.startPoint as { lat: number; lng: number };
+          if (typeof location.lat === 'number' && typeof location.lng === 'number') {
+            onLocationShared?.(location);
+          }
+        }
         break;
       
       default:
@@ -1174,7 +1182,11 @@ const VideoCallSystem: React.FC<VideoCallSystemProps> = ({
         userLocation={userLocation}
         userProfile={{
           name: userProfile?.name,
-          medicalInfo: userProfile?.medicalInfo,
+          medicalInfo: userProfile?.medicalInfo ? {
+            conditions: userProfile.medicalInfo.conditions || [],
+            medications: userProfile.medicalInfo.medications || [],
+            allergies: userProfile.medicalInfo.allergies || []
+          } : undefined,
           emergencyContacts: userProfile?.emergencyContacts,
           vulnerabilities: { mobility: 'medium', medical: [], age: 'adult', dependencies: [] },
           preferences: { transportMode: 'car', language: 'en', notificationLevel: 'standard' },

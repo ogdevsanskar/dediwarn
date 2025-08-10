@@ -177,7 +177,7 @@ export const AdminDashboard: React.FC = () => {
 
   const TabButton = ({ label, icon: Icon, active, onClick }: {
     label: string;
-    icon: any;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
     active: boolean;
     onClick: () => void;
   }) => (

@@ -115,7 +115,7 @@ class DisasterVisualizationService {
   private scene: THREE.Scene | null = null;
   private camera: THREE.PerspectiveCamera | null = null;
   private renderer: THREE.WebGLRenderer | null = null;
-  private controls: any = null; // OrbitControls
+  private controls: unknown = null; // OrbitControls - type will be set when library is imported
   private terrain: THREE.Mesh | null = null;
   private floodLayer: THREE.Group | null = null;
   private fireLayer: THREE.Group | null = null;
@@ -556,7 +556,7 @@ class DisasterVisualizationService {
 
       // Update controls
       if (this.controls) {
-        this.controls.update();
+        (this.controls as { update: () => void }).update();
       }
 
       // Render scene

@@ -100,6 +100,43 @@ export interface UserProfile {
   };
 }
 
+// Data structure interfaces for API responses
+interface WeatherForecastItem {
+  dt: number;
+  weather: Array<{
+    main: string;
+    description?: string;
+  }>;
+  main: {
+    temp: number;
+    humidity?: number;
+    pressure?: number;
+  };
+  wind?: {
+    speed: number;
+    deg: number;
+  };
+  rain?: {
+    '3h': number;
+  };
+}
+
+interface EarthquakeProperties {
+  mag: number;
+  place?: string;
+  time: number;
+  type?: string;
+}
+
+interface EarthquakeGeometry {
+  coordinates: number[]; // [longitude, latitude, depth?]
+}
+
+interface EarthquakeFeature {
+  properties: EarthquakeProperties;
+  geometry: EarthquakeGeometry;
+}
+
 class SmartRiskAssessment {
   private static instance: SmartRiskAssessment;
   private riskFactors: Map<string, RiskFactor[]> = new Map();
@@ -217,7 +254,7 @@ class SmartRiskAssessment {
       }
 
       // Forecast analysis for predictions
-      forecastData.list.forEach((forecast: any) => {
+      forecastData.list.forEach((forecast: WeatherForecastItem) => {
         if (forecast.weather[0].main === 'Thunderstorm') {
           risks.push({
             type: 'weather',
@@ -251,7 +288,7 @@ class SmartRiskAssessment {
       // Fetch recent seismic activity
       const seismicData = await this.fetchSeismicData(location);
 
-      seismicData.features.forEach((earthquake: any) => {
+      seismicData.features.forEach((earthquake: EarthquakeFeature) => {
         const magnitude = earthquake.properties.mag;
         const distance = this.calculateDistance(
           location.lat, location.lng,
@@ -425,7 +462,7 @@ class SmartRiskAssessment {
       });
 
       // Transportation network analysis
-      const trafficCongestion = await this.analyzeTrafficPatterns(location);
+      const trafficCongestion = await this.analyzeTrafficPatterns();
       if (trafficCongestion.severity > 70) {
         risks.push({
           type: 'infrastructure',
@@ -459,11 +496,11 @@ class SmartRiskAssessment {
       const riskFactors = await this.analyzeMultipleDataSources(location, 100);
       
       // Weather-based predictions
-      const weatherPredictions = await this.predictWeatherDisasters(location, riskFactors, timeframe);
+      const weatherPredictions = await this.predictWeatherDisasters(location, riskFactors);
       predictions.push(...weatherPredictions);
 
       // Geological predictions
-      const geologicalPredictions = await this.predictGeologicalDisasters(location, riskFactors, timeframe);
+      const geologicalPredictions = await this.predictGeologicalDisasters(location, riskFactors);
       predictions.push(...geologicalPredictions);
 
       // Environmental predictions
@@ -511,15 +548,13 @@ class SmartRiskAssessment {
    * Optimize evacuation routes using AI
    */
   async optimizeEvacuationRoutes(
-    startLocation: { lat: number; lng: number },
-    userProfile: UserProfile,
-    disasterType: string
+    startLocation: { lat: number; lng: number }
   ): Promise<EvacuationRoute[]> {
     const routes: EvacuationRoute[] = [];
 
     try {
       // Find potential evacuation destinations
-      const shelters = await this.findEvacuationShelters(startLocation, disasterType, 50);
+      const shelters = await this.findEvacuationShelters(startLocation);
       
       // Generate multiple route options for each shelter
       for (const shelter of shelters.slice(0, 3)) { // Top 3 shelters
@@ -532,7 +567,7 @@ class SmartRiskAssessment {
       }
 
       // Score and rank routes
-      const scoredRoutes = await this.scoreEvacuationRoutes(routes, userProfile);
+      const scoredRoutes = await this.scoreEvacuationRoutes(routes);
 
       return scoredRoutes.sort((a, b) => b.safetyScore - a.safetyScore).slice(0, 5);
     } catch (error) {
@@ -642,14 +677,13 @@ class SmartRiskAssessment {
     return []; // Simulate no critical infrastructure
   }
 
-  private async analyzeTrafficPatterns(_location: { lat: number; lng: number }) {
+  private async analyzeTrafficPatterns() {
     return { severity: Math.random() * 100 };
   }
 
   private async predictWeatherDisasters(
     location: { lat: number; lng: number },
-    riskFactors: RiskFactor[],
-    _timeframe: number
+    riskFactors: RiskFactor[]
   ): Promise<DisasterPrediction[]> {
     const predictions: DisasterPrediction[] = [];
     
@@ -718,8 +752,7 @@ class SmartRiskAssessment {
 
   private async predictGeologicalDisasters(
     location: { lat: number; lng: number },
-    riskFactors: RiskFactor[],
-    _timeframe: number
+    riskFactors: RiskFactor[]
   ): Promise<DisasterPrediction[]> {
     const predictions: DisasterPrediction[] = [];
     const geologicalRisks = riskFactors.filter(rf => rf.type === 'geological');
@@ -1029,9 +1062,7 @@ class SmartRiskAssessment {
   }
 
   private async findEvacuationShelters(
-    location: { lat: number; lng: number },
-    _disasterType: string,
-    _radius: number
+    location: { lat: number; lng: number }
   ) {
     // Simulate shelter finding
     return [
@@ -1067,8 +1098,7 @@ class SmartRiskAssessment {
   }
 
   private async scoreEvacuationRoutes(
-    routes: EvacuationRoute[],
-    _userProfile: UserProfile
+    routes: EvacuationRoute[]
   ): Promise<EvacuationRoute[]> {
     // Apply scoring algorithm
     return routes.map(route => ({

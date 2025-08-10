@@ -81,7 +81,7 @@ export interface Resource {
   condition: 'excellent' | 'good' | 'fair' | 'needs-repair';
   availability: 'available' | 'in-use' | 'maintenance';
   location: { lat: number; lng: number };
-  specifications?: { [key: string]: any };
+  specifications?: Record<string, string | number | boolean>;
   lastMaintenance?: Date;
   nextMaintenance?: Date;
 }
@@ -192,7 +192,7 @@ class VolunteerNetworkService {
   private trainingPrograms: Map<string, TrainingProgram> = new Map();
   private recognitionSystem: Map<string, RecognitionAward[]> = new Map();
   // Removed unused realTimeUpdates property
-  private eventListeners: Map<string, Function[]> = new Map();
+  private eventListeners: Map<string, ((data: unknown) => void)[]> = new Map();
 
   private constructor() {
     this.initializeVolunteerNetwork();
@@ -648,19 +648,19 @@ class VolunteerNetworkService {
     });
   }
 
-  private emitUpdate(eventType: string, data: any): void {
+  private emitUpdate(eventType: string, data: unknown): void {
     const listeners = this.eventListeners.get(eventType) || [];
     listeners.forEach(listener => listener(data));
   }
 
-  addEventListener(eventType: string, callback: Function): void {
+  addEventListener(eventType: string, callback: (data: unknown) => void): void {
     if (!this.eventListeners.has(eventType)) {
       this.eventListeners.set(eventType, []);
     }
     this.eventListeners.get(eventType)!.push(callback);
   }
 
-  removeEventListener(eventType: string, callback: Function): void {
+  removeEventListener(eventType: string, callback: (data: unknown) => void): void {
     const listeners = this.eventListeners.get(eventType) || [];
     const index = listeners.indexOf(callback);
     if (index > -1) {

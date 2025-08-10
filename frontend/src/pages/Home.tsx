@@ -20,7 +20,7 @@ export const Home: React.FC = () => {
       setCurrentStat((prev) => (prev + 1) % stats.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [stats.length]);
 
   useEffect(() => {
     let index = 0;

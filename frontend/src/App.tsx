@@ -21,13 +21,75 @@ import { NotificationCenter } from './components/NotificationCenter';
 import AdminPanel from './components/AdminPanel.tsx';
 import VideoCallSystem from './components/VideoCallSystem';
 import EmergencySystemIntegration from './components/EmergencySystemIntegration';
+import Collaboration from './pages/Collaboration';
+import CrowdsourcedReporting from './pages/CrowdsourcedReporting';
+import EnhancedDashboard from './pages/EnhancedDashboard';
+import EducationGamification from './pages/EducationGamification';
 import { initializeButtonFunctionality } from './components/ButtonFunctionality';
+
+// Type definitions
+interface AppNotification {
+  id: number;
+  type: 'emergency_alert' | 'app_update' | 'app_install' | 'offline_report' | 'report_sent' | 'success' | 'warning' | 'error' | 'info';
+  title: string;
+  message: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: string;
+  location?: { lat: number; lng: number };
+  actions?: Array<{ label: string; action: () => void }>;
+  read?: boolean;
+}
+
+interface DamageReport {
+  type: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+  images?: File[];
+  userId: string;
+  timestamp: number;
+}
+
+interface EnvironmentalData {
+  temperature?: number;
+  humidity?: number;
+  airQuality?: number;
+  windSpeed?: number;
+  rainfall?: number;
+  location: {
+    lat: number;
+    lng: number;
+  };
+}
+
+interface EmergencyAlert {
+  title?: string;
+  description?: string;
+  message?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  location?: {
+    lat: number;
+    lng: number;
+  };
+  actions?: Array<{ label: string; action: () => void }>;
+}
+
+interface InstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+}
 
 function App() {
   const [userLocation, setUserLocation] = useState({ lat: 0, lng: 0 });
   const [userRole, setUserRole] = useState<'authority' | 'volunteer' | 'citizen'>('citizen');
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showRoleSelector, setShowRoleSelector] = useState(false);
 
   useEffect(() => {
@@ -51,6 +113,7 @@ function App() {
       window.removeEventListener('online', () => setIsOnline(true));
       window.removeEventListener('offline', () => setIsOnline(false));
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const initializePWA = () => {
@@ -81,7 +144,7 @@ function App() {
     // Handle app install prompt
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
-      showInstallPrompt(e);
+      showInstallPrompt(e as InstallPromptEvent);
     });
   };
 
@@ -145,7 +208,7 @@ function App() {
     setNotifications(prev => [notification, ...prev]);
   };
 
-  const showInstallPrompt = (event: any) => {
+  const showInstallPrompt = (event: InstallPromptEvent) => {
     const notification = {
       id: Date.now(),
       type: 'app_install' as const,
@@ -165,7 +228,7 @@ function App() {
     setUserLocation({ lat: location.lat, lng: location.lng });
   };
 
-  const handleDamageReport = async (report: any) => {
+  const handleDamageReport = async (report: DamageReport) => {
     try {
       // Store offline if no connection
       if (!isOnline) {
@@ -186,13 +249,21 @@ function App() {
 
       // Send report online
       const formData = new FormData();
-      Object.keys(report).forEach(key => {
-        if (report[key] instanceof Blob) {
-          formData.append(key, report[key]);
-        } else {
-          formData.append(key, JSON.stringify(report[key]));
-        }
-      });
+      
+      // Add basic report data
+      formData.append('type', report.type);
+      formData.append('description', report.description);
+      formData.append('severity', report.severity);
+      formData.append('userId', report.userId);
+      formData.append('timestamp', report.timestamp.toString());
+      formData.append('location', JSON.stringify(report.location));
+      
+      // Add images if present
+      if (report.images) {
+        report.images.forEach((image, index) => {
+          formData.append(`image_${index}`, image);
+        });
+      }
 
       await fetch('/api/emergency-reports', {
         method: 'POST',
@@ -213,7 +284,7 @@ function App() {
     }
   };
 
-  const handleEnvironmentalData = async (data: any) => {
+  const handleEnvironmentalData = async (data: EnvironmentalData) => {
     try {
       await fetch('/api/environmental-data', {
         method: 'POST',
@@ -229,12 +300,12 @@ function App() {
     }
   };
 
-  const handleAlertReceived = (alert: any) => {
+  const handleAlertReceived = (alert: EmergencyAlert) => {
     const notification = {
       id: Date.now(),
       type: 'emergency_alert' as const,
       title: alert.title || 'Emergency Alert',
-      message: alert.description || alert.message,
+      message: alert.description || alert.message || 'Emergency alert received',
       severity: alert.severity || 'high' as const,
       timestamp: new Date().toISOString(),
       location: alert.location,
@@ -273,7 +344,7 @@ function App() {
     });
   };
 
-  const storeOfflineReport = (db: IDBDatabase, report: any): Promise<void> => {
+  const storeOfflineReport = (db: IDBDatabase, report: DamageReport): Promise<void> => {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(['pendingReports'], 'readwrite');
       const store = transaction.objectStore('pendingReports');
@@ -388,6 +459,10 @@ function App() {
                 />
               } 
             />
+            <Route path="/collaboration" element={<Collaboration />} />
+            <Route path="/reporting" element={<CrowdsourcedReporting />} />
+            <Route path="/enhanced-dashboard" element={<EnhancedDashboard />} />
+            <Route path="/education" element={<EducationGamification />} />
           </Routes>
         </main>
         

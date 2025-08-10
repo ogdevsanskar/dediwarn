@@ -205,7 +205,7 @@ export const AdminDashboard: React.FC = () => {
 
   const TabButton = ({ label, icon: Icon, active, onClick }: {
     label: string;
-    icon: any;
+    icon: React.ComponentType<{ className?: string }>;
     active: boolean;
     onClick: () => void;
   }) => (
@@ -502,7 +502,7 @@ export const AdminDashboard: React.FC = () => {
                 <select 
                   aria-label="Filter alerts by time range"
                   value={selectedTimeRange}
-                  onChange={(e) => setSelectedTimeRange(e.target.value as any)}
+                  onChange={(e) => setSelectedTimeRange(e.target.value as '1h' | '24h' | '7d' | '30d')}
                   className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="1h">Last Hour</option>

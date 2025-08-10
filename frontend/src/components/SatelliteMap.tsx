@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import './SatelliteMap.css';
 
 // Fix for default markers in React-Leaflet
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -130,7 +131,7 @@ const SatelliteMap: React.FC<SatelliteMapProps> = ({
         center={defaultCenter}
         zoom={defaultZoom}
         style={{ height: '100%', width: '100%' }}
-        ref={mapRef as any}
+        ref={mapRef as React.RefObject<L.Map>}
         className="rounded-lg overflow-hidden"
       >
         {/* Satellite Tile Layer */}

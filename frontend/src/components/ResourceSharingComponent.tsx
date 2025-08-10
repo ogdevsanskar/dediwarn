@@ -3,7 +3,7 @@
  * Community resource sharing and coordination system
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Package,
   Truck,
@@ -23,6 +23,12 @@ import {
   Trophy
 } from 'lucide-react';
 import VolunteerNetworkService, { Resource } from '../services/VolunteerNetworkService';
+
+interface ExtendedResource extends Resource {
+  ownerId?: string;
+  ownerName?: string;
+  ownerLocation?: { lat: number; lng: number; address: string };
+}
 
 interface ResourceSharingProps {
   currentUserId?: string;
@@ -50,7 +56,7 @@ const ResourceSharingComponent: React.FC<ResourceSharingProps> = ({
   isVisible
 }) => {
   const [activeTab, setActiveTab] = useState<'available' | 'requests' | 'my-resources' | 'sharing-history'>('available');
-  const [availableResources, setAvailableResources] = useState<Resource[]>([]);
+  const [availableResources, setAvailableResources] = useState<ExtendedResource[]>([]);
   const [resourceRequests, setResourceRequests] = useState<ResourceRequest[]>([]);
   const [myResources, setMyResources] = useState<Resource[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,13 +65,7 @@ const ResourceSharingComponent: React.FC<ResourceSharingProps> = ({
 
   const volunteerService = VolunteerNetworkService.getInstance();
 
-  useEffect(() => {
-    if (isVisible) {
-      loadResourceData();
-    }
-  }, [isVisible]);
-
-  const loadResourceData = () => {
+  const loadResourceData = useCallback(() => {
     // Load available resources from all volunteers
     const allVolunteers = volunteerService.getAllVolunteers();
     const resources: Resource[] = [];
@@ -79,7 +79,7 @@ const ResourceSharingComponent: React.FC<ResourceSharingProps> = ({
             ownerId: volunteer.id,
             ownerName: volunteer.name,
             ownerLocation: volunteer.location
-          } as any);
+          } as ExtendedResource);
         }
       });
     });
@@ -125,7 +125,13 @@ const ResourceSharingComponent: React.FC<ResourceSharingProps> = ({
         createdAt: new Date(Date.now() - 30 * 60 * 1000) // 30 minutes ago
       }
     ]);
-  };
+  }, [volunteerService, currentUserId]);
+
+  useEffect(() => {
+    if (isVisible) {
+      loadResourceData();
+    }
+  }, [isVisible, loadResourceData]);
 
   const handleResourceShare = async (resourceId: string, ownerId: string) => {
     try {
@@ -206,7 +212,7 @@ const ResourceSharingComponent: React.FC<ResourceSharingProps> = ({
           <select
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value as any)}
+            onChange={(e) => setFilterType(e.target.value as 'all' | 'vehicle' | 'equipment' | 'supplies' | 'shelter' | 'communication')}
             aria-label="Filter resources by type"
           >
             <option value="all">All Types</option>
@@ -248,11 +254,11 @@ const ResourceSharingComponent: React.FC<ResourceSharingProps> = ({
             <div className="space-y-2 mb-4">
               <div className="flex items-center text-sm text-gray-600">
                 <User className="h-4 w-4 mr-2" />
-                {(resource as any).ownerName}
+                {resource.ownerName}
               </div>
               <div className="flex items-center text-sm text-gray-600">
                 <MapPin className="h-4 w-4 mr-2" />
-                {(resource as any).ownerLocation?.address || 'Location available on contact'}
+                {resource.ownerLocation?.address || 'Location available on contact'}
               </div>
               {resource.quantity > 1 && (
                 <div className="flex items-center text-sm text-gray-600">
@@ -264,7 +270,7 @@ const ResourceSharingComponent: React.FC<ResourceSharingProps> = ({
 
             <div className="flex items-center justify-between pt-4 border-t border-gray-100">
               <button
-                onClick={() => handleResourceShare(resource.id, (resource as any).ownerId)}
+                onClick={() => handleResourceShare(resource.id, resource.ownerId || '')}
                 className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors mr-2"
               >
                 Request to Borrow
@@ -555,7 +561,7 @@ const ResourceSharingComponent: React.FC<ResourceSharingProps> = ({
             ].map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
-                onClick={() => setActiveTab(key as any)}
+                onClick={() => setActiveTab(key as 'available' | 'requests' | 'my-resources' | 'sharing-history')}
                 className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === key
                     ? 'border-blue-500 text-blue-600'

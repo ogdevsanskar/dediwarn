@@ -3,7 +3,7 @@
  * Comprehensive demonstration of crowdsourced incident reporting system
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   AlertTriangle, Users, Camera, Shield, MapPin, Clock, 
   CheckCircle, Eye, MessageSquare, Star,
@@ -28,11 +28,7 @@ export const CommunityReportingDemo: React.FC<CommunityReportingDemoProps> = ({
 
   const reportingService = CommunityReportingService.getInstance();
 
-  useEffect(() => {
-    loadDemoData();
-  }, []);
-
-  const loadDemoData = async () => {
+  const loadDemoData = useCallback(async () => {
     setLoading(true);
     try {
       // Load sample analytics
@@ -50,7 +46,11 @@ export const CommunityReportingDemo: React.FC<CommunityReportingDemoProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [reportingService]);
+
+  useEffect(() => {
+    loadDemoData();
+  }, [loadDemoData]);
 
   const demoFeatures = [
     {

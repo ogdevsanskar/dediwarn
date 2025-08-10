@@ -3,11 +3,38 @@ import { X, Send, Bot, Phone, Mail, Mic, MicOff, Volume2, VolumeX } from 'lucide
 import { getApiUrl, API_CONFIG } from '../config/api';
 
 // Web Speech API types
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
+interface SpeechRecognitionEventResult {
+  results: {
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+        confidence: number;
+      };
+      isFinal: boolean;
+      length: number;
+    };
+    length: number;
+  };
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string;
+  message: string;
+}
+
+// Speech Recognition API types (extending existing declarations)
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onstart: ((event: Event) => void) | null;
+  onend: ((event: Event) => void) | null;
+  onresult: ((event: SpeechRecognitionEventResult) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
 }
 
 interface Message {
@@ -42,7 +69,7 @@ export const AIAssistant: React.FC = () => {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [recognition, setRecognition] = useState<any>(null);
+  const [recognition, setRecognition] = useState<SpeechRecognitionInstance | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Helper function for SMS status color
@@ -115,7 +142,7 @@ export const AIAssistant: React.FC = () => {
         setIsListening(false);
       };
       
-      recognitionInstance.onresult = (event: any) => {
+      recognitionInstance.onresult = (event: SpeechRecognitionEventResult) => {
         const transcript = event.results[0][0].transcript;
         setInputMessage(transcript);
         // Auto-send voice commands
@@ -124,13 +151,14 @@ export const AIAssistant: React.FC = () => {
         }, 500);
       };
       
-      recognitionInstance.onerror = (event: any) => {
+      recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
       };
       
       setRecognition(recognitionInstance);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const simulateAIResponse = async (userMessage: string): Promise<Message> => {
@@ -154,7 +182,7 @@ export const AIAssistant: React.FC = () => {
           type: 'assistant',
           content: data.response,
           timestamp: new Date(),
-          actions: generateActionsFromResponse(data.intent, data.location)
+          actions: generateActionsFromResponse(data.intent)
         };
       }
     } catch (error) {
@@ -226,7 +254,7 @@ export const AIAssistant: React.FC = () => {
     return {
       id: Date.now().toString(),
       type: 'assistant',
-      content: `🛡️ DISASTER MANAGEMENT ASSISTANT\n\nI provide real-time disaster analysis and emergency guidance:\n\n🌍 **Real-time Monitoring:**\n• Earthquake activity and seismic data\n• Weather patterns and severe storm tracking\n• Flood levels and water monitoring\n• Emergency alerts and government advisories\n\n🚨 **Emergency Services:**\n• Instant SMS alerts to contacts (6001163688)\n• Emergency service connections\n• Location-based risk assessment\n• Evacuation guidance and shelter information\n\n🎯 **Ask me specific questions like:**\n• "Is there earthquake activity in [location]?"\n• "What\'s the flood risk in [area]?"\n• "Current weather alerts for [city]?"\n• "Emergency procedures for [disaster type]?"\n\nHow can I help you stay safe today?`,
+      content: `🛡️ DISASTER MANAGEMENT ASSISTANT\n\nI provide real-time disaster analysis and emergency guidance:\n\n🌍 **Real-time Monitoring:**\n• Earthquake activity and seismic data\n• Weather patterns and severe storm tracking\n• Flood levels and water monitoring\n• Emergency alerts and government advisories\n\n🚨 **Emergency Services:**\n• Instant SMS alerts to contacts (6001163688)\n• Emergency service connections\n• Location-based risk assessment\n• Evacuation guidance and shelter information\n\n🎯 **Ask me specific questions like:**\n• "Is there earthquake activity in [location]?"\n• "What's the flood risk in [area]?"\n• "Current weather alerts for [city]?"\n• "Emergency procedures for [disaster type]?"\n\nHow can I help you stay safe today?`,
       timestamp: new Date(),
       actions: [
         { type: 'sms', label: 'Test Emergency SMS', data: 'test_sms' },
@@ -235,7 +263,7 @@ export const AIAssistant: React.FC = () => {
     };
   };
 
-  const generateActionsFromResponse = (intent: string, _location: string) => {
+  const generateActionsFromResponse = (intent: string) => {
     const actions: Array<{ type: 'sms' | 'call'; label: string; data: string }> = [
       { type: 'sms', label: 'Send Alert SMS', data: 'alert_sms' }
     ];
@@ -358,7 +386,7 @@ export const AIAssistant: React.FC = () => {
       
       setMessages(prev => [...prev, confirmationMessage]);
       
-    } catch (error) {
+    } catch {
       setSmsAlerts(prev => 
         prev.map(alert => 
           alert.id === smsAlert.id 

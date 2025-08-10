@@ -48,9 +48,9 @@ export const useRealTimeData = (options: UseRealTimeDataOptions = {}) => {
   const unsubscribeFunctions = useRef<(() => void)[]>([]);
 
   // Update a specific data type
-  const updateDataType = useCallback((type: string, newData: any) => {
+  const updateDataType = useCallback((type: string, newData: unknown) => {
     setData(prevData => {
-      let updatedData = { ...prevData };
+      const updatedData = { ...prevData };
       
       switch (type) {
         case 'earthquakes':
@@ -87,7 +87,7 @@ export const useRealTimeData = (options: UseRealTimeDataOptions = {}) => {
     try {
       const locationWithRadius = location ? { ...location, radius: location.radius || 50 } : undefined;
       
-      const promises: Promise<any>[] = [];
+      const promises: Promise<{ type: string; data: unknown }>[] = [];
       
       if (dataTypes.includes('earthquakes')) {
         promises.push(
@@ -273,7 +273,7 @@ export const useRealTimeData = (options: UseRealTimeDataOptions = {}) => {
         alerts.push({
           id: incident.id,
           type: 'traffic',
-          severity: incident.severity as any,
+          severity: incident.severity as 'low' | 'medium' | 'high' | 'critical',
           title: incident.title,
           description: incident.description,
           coordinates: incident.coordinates,

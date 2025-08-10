@@ -6,6 +6,16 @@ interface EmergencyCommunicationProps {
   userLocation: { lat: number; lng: number };
 }
 
+interface ChatMessage {
+  id: string;
+  user: string;
+  sender?: string;
+  message: string;
+  timestamp: Date;
+  translated?: string;
+  translatedMessage?: string;
+}
+
 const EmergencyCommunication: React.FC<EmergencyCommunicationProps> = ({
   emergencyType,
   userLocation
@@ -15,7 +25,7 @@ const EmergencyCommunication: React.FC<EmergencyCommunicationProps> = ({
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [connectedUsers, setConnectedUsers] = useState<string[]>([]);
-  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [isTranslating, setIsTranslating] = useState(false);
@@ -56,6 +66,7 @@ const EmergencyCommunication: React.FC<EmergencyCommunicationProps> = ({
     return () => {
       cleanup();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const initializeWebSocket = () => {
@@ -80,10 +91,11 @@ const EmergencyCommunication: React.FC<EmergencyCommunicationProps> = ({
       const data = JSON.parse(event.data);
       
       switch (data.type) {
-        case 'new_message':
+        case 'new_message': {
           const translatedMessage = await translateMessage(data.message, selectedLanguage);
           setChatMessages(prev => [...prev, { ...data, translatedMessage }]);
           break;
+        }
         
         case 'user_joined':
           setConnectedUsers(prev => [...prev, data.userId]);

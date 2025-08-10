@@ -3,7 +3,7 @@
  * Real-time display of smart risk analysis and personalized recommendations
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   AlertTriangle,
   Brain,
@@ -32,15 +32,37 @@ interface AIRiskDashboardProps {
   userLocation?: { lat: number; lng: number };
   userProfile?: {
     name?: string;
-    medicalInfo?: any;
-    emergencyContacts?: any[];
-    vulnerabilities?: any;
-    preferences?: any;
-    resources?: any;
+    medicalInfo?: {
+      conditions: string[];
+      medications: string[];
+      allergies: string[];
+    };
+    emergencyContacts?: Array<{
+      name: string;
+      phone: string;
+      relationship: string;
+    }>;
+    vulnerabilities?: {
+      mobility: 'high' | 'medium' | 'low';
+      medical: string[];
+      age: 'child' | 'adult' | 'elderly';
+      dependencies: string[];
+    };
+    preferences?: {
+      transportMode: 'car' | 'walking' | 'bicycle' | 'public';
+      language: string;
+      notificationLevel: 'minimal' | 'standard' | 'detailed';
+    };
+    resources?: {
+      emergencySupplies: boolean;
+      vehicle: boolean;
+      pets: number;
+      familySize: number;
+    };
   };
   isVisible: boolean;
   onToggleVisibility: () => void;
-  onEmergencyAction?: (action: string, data: any) => void;
+  onEmergencyAction?: (action: string, data: unknown) => void;
 }
 
 const AIRiskDashboard: React.FC<AIRiskDashboardProps> = ({
@@ -60,17 +82,7 @@ const AIRiskDashboard: React.FC<AIRiskDashboardProps> = ({
 
   const riskAssessment = SmartRiskAssessment.getInstance();
 
-  useEffect(() => {
-    if (userLocation && isVisible) {
-      performAIAnalysis();
-      
-      // Set up periodic updates every 15 minutes
-      const interval = setInterval(performAIAnalysis, 15 * 60 * 1000);
-      return () => clearInterval(interval);
-    }
-  }, [userLocation, isVisible]);
-
-  const performAIAnalysis = async () => {
+  const performAIAnalysis = useCallback(async () => {
     if (!userLocation) return;
 
     setIsLoading(true);
@@ -101,9 +113,7 @@ const AIRiskDashboard: React.FC<AIRiskDashboardProps> = ({
         // Step 4: Optimize evacuation routes
         if (disasterPredictions.length > 0) {
           const routes = await riskAssessment.optimizeEvacuationRoutes(
-            userLocation,
-            profile,
-            disasterPredictions[0].disasterType
+            userLocation
           );
           setEvacuationRoutes(routes);
         }
@@ -117,7 +127,17 @@ const AIRiskDashboard: React.FC<AIRiskDashboardProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [userLocation, userProfile, riskAssessment]);
+
+  useEffect(() => {
+    if (userLocation && isVisible) {
+      performAIAnalysis();
+      
+      // Set up periodic updates every 15 minutes
+      const interval = setInterval(performAIAnalysis, 15 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, [userLocation, isVisible, performAIAnalysis]);
 
   const getRiskLevelColor = (severity: number) => {
     if (severity >= 80) return 'text-red-500 bg-red-500/20 border-red-500/30';
@@ -147,7 +167,7 @@ const AIRiskDashboard: React.FC<AIRiskDashboardProps> = ({
     }
   };
 
-  const handleEmergencyAction = (action: string, data: any) => {
+  const handleEmergencyAction = (action: string, data: DisasterPrediction | PersonalSafetyRecommendation | EvacuationRoute) => {
     onEmergencyAction?.(action, data);
   };
 
@@ -392,7 +412,7 @@ const AIRiskDashboard: React.FC<AIRiskDashboardProps> = ({
               </h3>
               
               <div className="space-y-3">
-                {evacuationRoutes.slice(0, 2).map((route, _index) => (
+                {evacuationRoutes.slice(0, 2).map((route) => (
                   <div
                     key={route.id}
                     className="border border-orange-500/30 bg-orange-500/20 rounded-lg p-3 text-orange-200"

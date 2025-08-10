@@ -408,10 +408,12 @@ function determineIntent(message: string) {
   return { type: 'general', location };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function getEarthquakeData(_location: string) {
   try {
     const response = await axios.get(`http://localhost:${PORT}/api/disasters/earthquakes`);
     return response.data;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_error) {
     return { success: false, data: [] };
   }
@@ -421,6 +423,7 @@ async function getWeatherData(location: string) {
   try {
     const response = await axios.get(`http://localhost:${PORT}/api/disasters/weather?city=${location}`);
     return response.data;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_error) {
     return { success: false, data: {} };
   }
@@ -430,6 +433,7 @@ async function getFloodAlerts(location: string) {
   try {
     const response = await axios.get(`http://localhost:${PORT}/api/disasters/alerts?type=flood&location=${location}`);
     return response.data;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (_error) {
     return { success: false, data: [] };
   }
@@ -504,6 +508,7 @@ ${alert.recommendations.map((rec: string) => `• ${rec}`).join('\n')}
 Stay vigilant and follow local emergency instructions.`;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function generateGeneralDisasterResponse(_message: string): string {
   return `Thank you for your question. I'm equipped to provide real-time disaster information including:
 

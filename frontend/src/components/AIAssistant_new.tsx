@@ -6,11 +6,62 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import './AIAssistant_new.css';
 
 // Web Speech API types
+interface SpeechRecognitionEventResult {
+  results: {
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+        confidence: number;
+      };
+      isFinal: boolean;
+      length: number;
+    };
+    length: number;
+  };
+  resultIndex: number;
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string;
+  message: string;
+}
+
 declare global {
   interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
+    SpeechRecognition: {
+      new (): SpeechRecognitionInstance;
+    };
+    webkitSpeechRecognition: {
+      new (): SpeechRecognitionInstance;
+    };
   }
+}
+
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onstart: ((event: Event) => void) | null;
+  onend: ((event: Event) => void) | null;
+  onresult: ((event: SpeechRecognitionEventResult) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+}
+
+// Define message and action types
+interface RasaMessage {
+  text: string;
+  custom?: {
+    actions?: ActionType[];
+  };
+}
+
+interface ActionType {
+  type: 'sms' | 'email' | 'call';
+  label: string;
+  data: string;
 }
 
 // AI Configuration
@@ -100,7 +151,7 @@ export const AIAssistant: React.FC = () => {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [recognition, setRecognition] = useState<any>(null);
+  const [recognition, setRecognition] = useState<SpeechRecognitionInstance | null>(null);
   const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
   const [fcmToken, setFcmToken] = useState<string>('');
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -108,9 +159,6 @@ export const AIAssistant: React.FC = () => {
 
   useEffect(() => {
     console.log('AIAssistant component mounted');
-    
-    // Initialize push notifications
-    initializePushNotifications();
     
     // Get user's location for satellite map
     if (navigator.geolocation) {
@@ -172,7 +220,7 @@ export const AIAssistant: React.FC = () => {
         setIsListening(false);
       };
       
-      recognitionInstance.onresult = (event: any) => {
+      recognitionInstance.onresult = (event: SpeechRecognitionEventResult) => {
         const transcript = event.results[0][0].transcript;
         setInputMessage(transcript);
         // Auto-send voice commands
@@ -181,13 +229,14 @@ export const AIAssistant: React.FC = () => {
         }, 500);
       };
       
-      recognitionInstance.onerror = (event: any) => {
+      recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
       };
       
       setRecognition(recognitionInstance);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // OpenAI GPT API Integration
@@ -271,15 +320,15 @@ export const AIAssistant: React.FC = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
+        const data: RasaMessage[] = await response.json();
         let content = 'I understand you need help. Let me assist you with disaster-related information.';
-        let actions: any[] = [];
+        const actions: ActionType[] = [];
         
         if (data && data.length > 0) {
-          content = data.map((msg: any) => msg.text).join('\n') || content;
+          content = data.map((msg) => msg.text).join('\n') || content;
           
           // Extract custom actions from Rasa response
-          data.forEach((msg: any) => {
+          data.forEach((msg) => {
             if (msg.custom && msg.custom.actions) {
               actions.push(...msg.custom.actions);
             }
@@ -424,7 +473,7 @@ export const AIAssistant: React.FC = () => {
   };
 
   // Send Push Notification
-  const sendPushNotification = async (title: string, body: string, data?: any): Promise<boolean> => {
+  const sendPushNotification = async (title: string, body: string, data?: Record<string, string>): Promise<boolean> => {
     try {
       if (!fcmToken) {
         throw new Error('FCM token not available');
@@ -507,7 +556,7 @@ export const AIAssistant: React.FC = () => {
           try {
             return await callRasaAPI(userMessage);
           } catch (error) {
-            console.warn('Rasa API not available, falling back to local');
+            console.warn('Rasa API not available, falling back to local', error);
           }
           break;
       }
@@ -836,6 +885,7 @@ export const AIAssistant: React.FC = () => {
       setMessages(prev => [...prev, confirmationMessage]);
       
     } catch (error) {
+      console.error('Error sending SMS:', error);
       const errorMessage: Message = {
         id: Date.now().toString(),
         type: 'assistant',

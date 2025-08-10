@@ -244,6 +244,7 @@ export const ResourceDirectory: React.FC<ResourceDirectoryProps> = ({
 
     setResources(resourcesWithDistance);
     setIsLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userLocation]);
 
   // Filter resources

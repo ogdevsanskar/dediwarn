@@ -182,7 +182,7 @@ export class InputSanitizer {
   }
 
   // General input sanitization with XSS protection
-  static sanitizeInput(input: any): any {
+  static sanitizeInput(input: unknown): unknown {
     if (typeof input === 'string') {
       return this.sanitizeText(input);
     }
@@ -192,7 +192,7 @@ export class InputSanitizer {
     }
     
     if (typeof input === 'object' && input !== null) {
-      const sanitized: any = {};
+      const sanitized: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(input)) {
         sanitized[this.sanitizeText(key)] = this.sanitizeInput(value);
       }

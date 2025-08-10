@@ -1,7 +1,64 @@
-import express from 'express';
+import * as express from 'express';
+import { Request, Response } from 'express';
 import axios from 'axios';
 import rateLimit from 'express-rate-limit';
 import { Server } from 'socket.io';
+
+// Type definitions for API responses
+interface EarthquakeFeature {
+  properties: {
+    mag: number;
+    place: string;
+    time: number;
+    updated: number;
+    tz: number;
+    url: string;
+    detail: string;
+    felt: number;
+    cdi: number;
+    mmi: number;
+    alert: string;
+    status: string;
+    tsunami: number;
+    sig: number;
+    net: string;
+    code: string;
+    ids: string;
+    sources: string;
+    types: string;
+    nst: number;
+    dmin: number;
+    rms: number;
+    gap: number;
+    magType: string;
+    type: string;
+    title: string;
+  };
+  geometry: {
+    type: string;
+    coordinates: [number, number, number];
+  };
+  id: string;
+}
+
+interface WeatherAlertFeature {
+  properties: {
+    id: string;
+    event: string;
+    description: string;
+    severity?: string;
+    certainty?: string;
+    urgency?: string;
+    headline: string;
+    areaDesc?: string;
+    effective: string;
+    expires: string;
+    status?: string;
+  };
+  geometry?: {
+    coordinates?: number[][][];
+  };
+}
 
 // Rate limiting for API endpoints
 const apiLimiter = rateLimit({
@@ -20,7 +77,7 @@ const emergencyLimiter = rateLimit({
 const router = express.Router();
 
 // Apply rate limiting to all routes
-router.use(apiLimiter);
+router.use(apiLimiter as unknown as express.RequestHandler);
 
 // Real-time data service configuration
 const API_KEYS = {
@@ -49,12 +106,12 @@ const getCachedData = (key: string, ttl: number) => {
 };
 
 // Utility function to set cache
-const setCachedData = (key: string, data: any) => {
+const setCachedData = (key: string, data: unknown) => {
   cache.set(key, { data, timestamp: Date.now() });
 };
 
 // USGS Earthquake API endpoint
-router.get('/api/earthquakes', async (req, res) => {
+router.get('/api/earthquakes', async (req: express.Request, res: express.Response) => {
   try {
     const { lat, lng, radius, minMagnitude = '2.5', timeRange = 'day' } = req.query;
     const cacheKey = `earthquakes-${lat}-${lng}-${radius}-${minMagnitude}-${timeRange}`;
@@ -95,7 +152,7 @@ router.get('/api/earthquakes', async (req, res) => {
     }
 
     const response = await axios.get(url, { timeout: 10000 });
-    const earthquakes = response.data.features.map((feature: any) => ({
+    const earthquakes = response.data.features.map((feature: EarthquakeFeature) => ({
       id: feature.id,
       magnitude: feature.properties.mag,
       location: feature.properties.place,
@@ -121,7 +178,7 @@ router.get('/api/earthquakes', async (req, res) => {
 });
 
 // National Weather Service API endpoint
-router.get('/api/weather-alerts', async (req, res) => {
+router.get('/api/weather-alerts', async (req: express.Request, res: express.Response) => {
   try {
     const { lat, lng } = req.query;
     const cacheKey = `weather-alerts-${lat}-${lng}`;
@@ -143,7 +200,7 @@ router.get('/api/weather-alerts', async (req, res) => {
       timeout: 10000
     });
 
-    const alerts = response.data.features.map((feature: any) => ({
+    const alerts = response.data.features.map((feature: WeatherAlertFeature) => ({
       id: feature.properties.id,
       title: feature.properties.event,
       description: feature.properties.description,
@@ -169,7 +226,7 @@ router.get('/api/weather-alerts', async (req, res) => {
 });
 
 // Traffic incidents endpoint (using HERE API)
-router.get('/api/traffic-incidents', async (req, res) => {
+router.get('/api/traffic-incidents', async (req: Request, res: Response) => {
   try {
     const { lat, lng, radius = 25 } = req.query;
     
@@ -211,25 +268,36 @@ router.get('/api/traffic-incidents', async (req, res) => {
 
     const response = await axios.get(url, { timeout: 10000 });
     
-    const incidents = response.data.TRAFFIC_ITEMS?.TRAFFIC_ITEM?.map((item: any) => ({
-      id: item.TRAFFIC_ITEM_ID,
-      type: mapTrafficType(item.TRAFFIC_ITEM_TYPE_DESC),
-      severity: mapTrafficSeverity(item.CRITICALITY),
-      title: item.TRAFFIC_ITEM_DESCRIPTION?.[0]?.content || 'Traffic Incident',
-      description: item.TRAFFIC_ITEM_DETAIL?.[0]?.content || '',
-      location: item.LOCATION?.DEFINED?.ORIGIN?.ROADWAY?.[0]?.DESCRIPTION?.[0]?.content || 'Unknown location',
-      coordinates: [
-        parseFloat(item.LOCATION?.DEFINED?.ORIGIN?.LATITUDE || '0'),
-        parseFloat(item.LOCATION?.DEFINED?.ORIGIN?.LONGITUDE || '0')
-      ],
-      roadName: item.LOCATION?.DEFINED?.ORIGIN?.ROADWAY?.[0]?.DESCRIPTION?.[0]?.content || 'Unknown road',
-      lanes_affected: parseInt(item.LOCATION?.DEFINED?.ORIGIN?.ROADWAY?.[0]?.LANES_AFFECTED || '1'),
-      estimated_duration: item.AVERAGE_DELAY || 'Unknown',
-      start_time: item.START_TIME || new Date().toISOString(),
-      end_time: item.END_TIME,
-      detour_available: item.LOCATION?.DEFINED?.ORIGIN?.ROADWAY?.[0]?.DETOUR_AVAILABLE === 'true',
-      emergency_services_on_scene: item.TRAFFIC_ITEM_DESCRIPTION?.[0]?.content?.toLowerCase().includes('emergency') || false
-    })) || [];
+    const incidents = response.data.TRAFFIC_ITEMS?.TRAFFIC_ITEM?.map((item: unknown) => {
+      // Type assertion for complex nested API structure
+      const t = item as Record<string, unknown>;
+      const location = t.LOCATION as Record<string, unknown> | undefined;
+      const defined = location?.DEFINED as Record<string, unknown> | undefined;
+      const origin = defined?.ORIGIN as Record<string, unknown> | undefined;
+      const roadway = origin?.ROADWAY as Record<string, unknown>[] | undefined;
+      const desc = t.TRAFFIC_ITEM_DESCRIPTION as Record<string, unknown>[] | undefined;
+      const detail = t.TRAFFIC_ITEM_DETAIL as Record<string, unknown>[] | undefined;
+      
+      return {
+        id: t.TRAFFIC_ITEM_ID,
+        type: mapTrafficType(t.TRAFFIC_ITEM_TYPE_DESC as string),
+        severity: mapTrafficSeverity(t.CRITICALITY as string),
+        title: desc?.[0]?.content || 'Traffic Incident',
+        description: detail?.[0]?.content || '',
+        location: ((roadway?.[0] as Record<string, unknown>)?.DESCRIPTION as Record<string, unknown>[])?.[0]?.content as string || 'Unknown location',
+        coordinates: [
+          parseFloat(origin?.LATITUDE as string || '0'),
+          parseFloat(origin?.LONGITUDE as string || '0')
+        ],
+        roadName: ((roadway?.[0] as Record<string, unknown>)?.DESCRIPTION as Record<string, unknown>[])?.[0]?.content as string || 'Unknown road',
+        lanes_affected: parseInt(roadway?.[0]?.LANES_AFFECTED as string || '1'),
+        estimated_duration: t.AVERAGE_DELAY || 'Unknown',
+        start_time: t.START_TIME || new Date().toISOString(),
+        end_time: t.END_TIME,
+        detour_available: roadway?.[0]?.DETOUR_AVAILABLE === 'true',
+        emergency_services_on_scene: desc?.[0]?.content?.toString().toLowerCase().includes('emergency') || false
+      };
+    }) || [];
 
     setCachedData(cacheKey, incidents);
     res.json(incidents);
@@ -241,7 +309,7 @@ router.get('/api/traffic-incidents', async (req, res) => {
 });
 
 // Hospital capacity endpoint
-router.get('/api/hospitals/capacity', async (req, res) => {
+router.get('/api/hospitals/capacity', async (req: Request, res: Response) => {
   try {
     const { lat, lng, radius = 25 } = req.query;
     
@@ -313,7 +381,7 @@ router.get('/api/hospitals/capacity', async (req, res) => {
 });
 
 // Get local emergency number based on location
-router.get('/api/emergency-numbers', async (req, res) => {
+router.get('/api/emergency-numbers', async (req: Request, res: Response) => {
   try {
     const { lat, lng } = req.query;
     
@@ -359,7 +427,7 @@ router.get('/api/emergency-numbers', async (req, res) => {
 });
 
 // Send emergency message endpoint
-router.post('/api/send-emergency-message', emergencyLimiter, async (req, res) => {
+router.post('/api/send-emergency-message', emergencyLimiter as unknown as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { phone, message, priority } = req.body;
     
@@ -384,7 +452,7 @@ router.post('/api/send-emergency-message', emergencyLimiter, async (req, res) =>
 });
 
 // Alert volunteers endpoint
-router.post('/api/alert-volunteers', emergencyLimiter, async (req, res) => {
+router.post('/api/alert-volunteers', emergencyLimiter as unknown as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { location, emergencyType, userProfile } = req.body;
     
@@ -411,7 +479,7 @@ router.post('/api/alert-volunteers', emergencyLimiter, async (req, res) => {
 });
 
 // Location update endpoint for emergency tracking
-router.post('/api/location-update', emergencyLimiter, async (req, res) => {
+router.post('/api/location-update', emergencyLimiter as unknown as express.RequestHandler, async (req: Request, res: Response) => {
   try {
     const { location, timestamp, accuracy } = req.body;
     
@@ -435,7 +503,7 @@ router.post('/api/location-update', emergencyLimiter, async (req, res) => {
 });
 
 // Emergency recording upload endpoint
-router.post('/api/emergency-recording', emergencyLimiter, async (_, res) => {
+router.post('/api/emergency-recording', emergencyLimiter as unknown as express.RequestHandler, async (_, res) => {
   try {
     // In production, handle file upload to secure storage
     console.log('Emergency recording uploaded');
@@ -476,7 +544,7 @@ export const setupRealTimeUpdates = (io: Server) => {
   setInterval(async () => {
     try {
       const response = await axios.get('https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minmagnitude=4.0&orderby=time&starttime=' + new Date(Date.now() - 5 * 60 * 1000).toISOString());
-      const earthquakes = response.data.features.map((feature: any) => ({
+      const earthquakes = response.data.features.map((feature: EarthquakeFeature) => ({
         id: feature.id,
         magnitude: feature.properties.mag,
         location: feature.properties.place,
@@ -503,8 +571,8 @@ export const setupRealTimeUpdates = (io: Server) => {
       });
       
       const severeAlerts = response.data.features
-        .filter((feature: any) => feature.properties.severity === 'Severe' || feature.properties.severity === 'Extreme')
-        .map((feature: any) => ({
+        .filter((feature: WeatherAlertFeature) => feature.properties.severity === 'Severe' || feature.properties.severity === 'Extreme')
+        .map((feature: WeatherAlertFeature) => ({
           id: feature.properties.id,
           event: feature.properties.event,
           headline: feature.properties.headline,

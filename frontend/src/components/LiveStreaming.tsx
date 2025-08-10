@@ -1,10 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Radio, AlertTriangle, Eye, MapPin, Wifi, WifiOff, Activity } from 'lucide-react';
 
+interface Alert {
+  id: string;
+  type: 'weather' | 'seismic' | 'fire' | 'flood' | 'general';
+  message: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: string;
+  location?: { lat: number; lng: number };
+  magnitude?: number; // For seismic alerts
+}
+
+interface WebSocketMessage {
+  type: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any; // Allow any additional properties for flexible WebSocket messages
+}
+
 interface LiveStreamingProps {
   userLocation: { lat: number; lng: number };
   userRole: 'authority' | 'volunteer' | 'citizen';
-  onAlertReceived: (alert: any) => void;
+  onAlertReceived: (alert: Alert) => void;
 }
 
 interface StreamData {
@@ -78,6 +94,7 @@ const LiveStreaming: React.FC<LiveStreamingProps> = ({
       cleanup();
       clearInterval(intervalId);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const initializeWebSocket = () => {
@@ -116,7 +133,7 @@ const LiveStreaming: React.FC<LiveStreamingProps> = ({
     };
   };
 
-  const handleWebSocketMessage = (data: any) => {
+  const handleWebSocketMessage = (data: WebSocketMessage) => {
     switch (data.type) {
       case 'streams_update':
         setActiveStreams(data.streams);
@@ -142,10 +159,13 @@ const LiveStreaming: React.FC<LiveStreamingProps> = ({
         setSeismicData(prev => [data.data, ...prev]);
         if (data.data.magnitude > 4.0) {
           onAlertReceived({
-            type: 'earthquake',
+            id: `seismic-${Date.now()}`,
+            type: 'seismic',
+            message: `Magnitude ${data.data.magnitude} earthquake detected`,
             magnitude: data.data.magnitude,
             location: data.data.location,
-            severity: data.data.magnitude > 6.0 ? 'critical' : 'high'
+            severity: data.data.magnitude > 6.0 ? 'critical' : 'high',
+            timestamp: new Date().toISOString()
           });
         }
         break;
@@ -450,7 +470,7 @@ const LiveStreaming: React.FC<LiveStreamingProps> = ({
                 <select
                   aria-label="Stream Quality"
                   value={streamQuality}
-                  onChange={(e) => setStreamQuality(e.target.value as any)}
+                  onChange={(e) => setStreamQuality(e.target.value as 'low' | 'medium' | 'high')}
                   className="border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="low">Low Quality (Data Saver)</option>

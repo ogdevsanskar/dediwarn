@@ -180,7 +180,7 @@ const EmergencySystemIntegration: React.FC<EmergencySystemIntegrationProps> = ({
                     </div>
 
                     <button
-                      onClick={() => setActiveSystem(system.id as any)}
+                      onClick={() => setActiveSystem(system.id as 'overview' | 'community' | 'visualization' | 'offline')}
                       className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
                         system.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' :
                         system.color === 'purple' ? 'bg-purple-600 hover:bg-purple-700' :

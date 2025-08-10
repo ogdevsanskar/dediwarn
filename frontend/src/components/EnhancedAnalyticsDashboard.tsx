@@ -19,7 +19,7 @@ interface AnalyticsMetric {
   title: string;
   value: string | number;
   change: number;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   color: string;
   description: string;
 }
@@ -112,6 +112,7 @@ export const AnalyticsDashboard: React.FC = () => {
       setDisasterData(mockDisasterData);
       setIsLoading(false);
     }, 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
   // Calculate metrics
@@ -371,7 +372,7 @@ export const AnalyticsDashboard: React.FC = () => {
             ].map(range => (
               <button
                 key={range.key}
-                onClick={() => setTimeRange(range.key as any)}
+                onClick={() => setTimeRange(range.key as '24h' | '7d' | '30d' | '1y')}
                 className={`px-3 py-1 rounded-lg text-sm transition-colors ${
                   timeRange === range.key
                     ? 'bg-blue-600 text-white'

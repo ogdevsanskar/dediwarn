@@ -99,10 +99,69 @@ export interface DisasterEvent {
   status: 'active' | 'contained' | 'resolved';
 }
 
+// API Response interfaces
+interface USGSEarthquakeFeature {
+  id: string;
+  properties: {
+    mag: number;
+    place: string;
+    time: number;
+    tsunami: number;
+    alert: string | null;
+    url: string;
+    [key: string]: unknown;
+  };
+  geometry: {
+    coordinates: [number, number, number]; // [lng, lat, depth]
+  };
+}
+
+interface WeatherAlertFeature {
+  properties: {
+    id: string;
+    event: string;
+    description: string;
+    severity: string;
+    certainty: string;
+    urgency: string;
+    headline: string;
+    areaDesc: string;
+    effective: string;
+    expires: string;
+    status: string;
+    [key: string]: unknown;
+  };
+  geometry?: {
+    coordinates: number[][][];
+  };
+}
+
+interface TrafficIncidentItem {
+  TRAFFIC_ITEM_ID: string;
+  TRAFFIC_ITEM_TYPE_DESC: string;
+  CRITICALITY: string;
+  TRAFFIC_ITEM_DESCRIPTION?: Array<{ content: string }>;
+  TRAFFIC_ITEM_DETAIL?: Array<{ content: string }>;
+  LOCATION?: {
+    DEFINED?: {
+      ORIGIN?: {
+        LATITUDE?: string;
+        LONGITUDE?: string;
+        ROADWAY?: Array<{
+          DESCRIPTION?: Array<{ content: string }>;
+          LANES_AFFECTED?: string;
+          DETOUR_AVAILABLE?: string;
+        }>;
+      };
+    };
+  };
+  [key: string]: unknown;
+}
+
 class RealTimeDataService {
   private socket: Socket | null = null;
-  private subscribers: Map<string, Set<(data: any) => void>> = new Map();
-  private cache: Map<string, { data: any; timestamp: number }> = new Map();
+  private subscribers: Map<string, Set<(data: unknown) => void>> = new Map();
+  private cache: Map<string, { data: unknown; timestamp: number }> = new Map();
   private cacheTimeout = 300000; // 5 minutes
   private apiKeys = {
     weather: process.env.REACT_APP_WEATHER_API_KEY || '',
@@ -169,7 +228,7 @@ class RealTimeDataService {
   }
 
   // Subscribe to specific data type updates
-  public subscribe(dataType: string, callback: (data: any) => void) {
+  public subscribe(dataType: string, callback: (data: unknown) => void) {
     if (!this.subscribers.has(dataType)) {
       this.subscribers.set(dataType, new Set());
     }
@@ -182,7 +241,7 @@ class RealTimeDataService {
   }
 
   // Notify subscribers of data updates
-  private notifySubscribers(dataType: string, data: any) {
+  private notifySubscribers(dataType: string, data: unknown) {
     const typeSubscribers = this.subscribers.get(dataType);
     if (typeSubscribers) {
       typeSubscribers.forEach(callback => callback(data));
@@ -198,19 +257,19 @@ class RealTimeDataService {
   // Get cached data or fetch new
   private async getCachedOrFetch<T>(key: string, fetchFunction: () => Promise<T>): Promise<T> {
     if (this.isCacheValid(key)) {
-      return this.cache.get(key)!.data;
+      return this.cache.get(key)!.data as T;
     }
 
     try {
       const data = await fetchFunction();
-      this.cache.set(key, { data, timestamp: Date.now() });
+      this.cache.set(key, { data: data as unknown, timestamp: Date.now() });
       return data;
     } catch (error) {
       console.error(`Failed to fetch ${key}:`, error);
       // Return cached data if available, even if expired
       const cached = this.cache.get(key);
       if (cached) {
-        return cached.data;
+        return cached.data as T;
       }
       throw error;
     }
@@ -262,7 +321,7 @@ class RealTimeDataService {
 
       const data = await response.json();
       
-      const earthquakes: EarthquakeData[] = data.features.map((feature: any) => ({
+      const earthquakes: EarthquakeData[] = data.features.map((feature: USGSEarthquakeFeature) => ({
         id: feature.id,
         magnitude: feature.properties.mag,
         location: feature.properties.place,
@@ -318,7 +377,7 @@ class RealTimeDataService {
 
       const data = await response.json();
       
-      const alerts: WeatherAlert[] = data.features.map((feature: any) => ({
+      const alerts: WeatherAlert[] = data.features.map((feature: WeatherAlertFeature) => ({
         id: feature.properties.id,
         title: feature.properties.event,
         description: feature.properties.description,
@@ -356,7 +415,7 @@ class RealTimeDataService {
 
       const data = await response.json();
       
-      const incidents: TrafficIncident[] = data.TRAFFIC_ITEMS?.TRAFFIC_ITEM?.map((item: any) => ({
+      const incidents: TrafficIncident[] = data.TRAFFIC_ITEMS?.TRAFFIC_ITEM?.map((item: TrafficIncidentItem) => ({
         id: item.TRAFFIC_ITEM_ID,
         type: this.mapTrafficType(item.TRAFFIC_ITEM_TYPE_DESC),
         severity: this.mapTrafficSeverity(item.CRITICALITY),

@@ -34,7 +34,7 @@ interface LiveChartProps {
 }
 
 export const LiveChart: React.FC<LiveChartProps> = ({ type, title, height = 300 }) => {
-  const [chartData, setChartData] = useState<any>(null);
+  const [chartData, setChartData] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -209,7 +209,8 @@ export const LiveChart: React.FC<LiveChartProps> = ({ type, title, height = 300 
         </div>
       </div>
       <div className={styles.chartContainer}>
-        <ChartComponent data={chartData} options={options} height={height} />
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <ChartComponent data={chartData as any} options={options} height={height} />
       </div>
     </div>
   );

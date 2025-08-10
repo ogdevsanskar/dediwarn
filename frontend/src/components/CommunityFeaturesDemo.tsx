@@ -346,7 +346,7 @@ const CommunityFeaturesDemo: React.FC = () => {
               ].map(({ key, label, icon: Icon }) => (
                 <button
                   key={key}
-                  onClick={() => setActiveFeature(key as any)}
+                  onClick={() => setActiveFeature(key as 'overview' | 'volunteer-network' | 'resource-sharing')}
                   className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                     activeFeature === key
                       ? 'border-blue-500 text-blue-600'

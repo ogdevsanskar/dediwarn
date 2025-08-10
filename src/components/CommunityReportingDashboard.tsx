@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import CommunityReportingService, { 
   IncidentReport, 
+  IncidentUpdate,
   MediaEvidence, 
   CommunityVerification,
   ReportingAnalytics
@@ -61,6 +62,72 @@ export const CommunityReportingDashboard: React.FC<CommunityReportingDashboardPr
 
   const reportingService = CommunityReportingService.getInstance();
 
+  const loadReports = useCallback(async () => {
+    setLoading(true);
+    try {
+      const loadedReports = await reportingService.getReports({
+        location: userLocation ? { ...userLocation, radius: filters.radius * 1000 } : undefined,
+        incidentTypes: filters.incidentTypes.length > 0 ? filters.incidentTypes : undefined,
+        severity: filters.severity.length > 0 ? filters.severity : undefined,
+        verificationStatus: filters.verificationStatus.length > 0 ? filters.verificationStatus : undefined,
+        limit: 50,
+        sortBy: 'timestamp'
+      });
+      setReports(loadedReports);
+    } catch (error) {
+      console.error('Error loading reports:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [reportingService, userLocation, filters]);
+
+  const loadAnalytics = useCallback(async () => {
+    try {
+      const analyticsData = await reportingService.getAnalytics(filters.timeframe);
+      setAnalytics(analyticsData);
+    } catch (error) {
+      console.error('Error loading analytics:', error);
+    }
+  }, [reportingService, filters.timeframe]);
+
+  // Real-time event handlers
+  const handleNewReport = useCallback((data: unknown) => {
+    const report = data as IncidentReport;
+    setReports(prev => [report, ...prev]);
+  }, []);
+
+  const handleReportUpdate = useCallback((data: unknown) => {
+    const updateData = data as { reportId: string; update: IncidentUpdate };
+    setReports(prev => prev.map(report => 
+      report.id === updateData.reportId 
+        ? { ...report, updates: [...report.updates, updateData.update] }
+        : report
+    ));
+  }, []);
+
+  const handleVerificationAdded = useCallback((data: unknown) => {
+    const verificationData = data as { reportId: string; verification: CommunityVerification };
+    setReports(prev => prev.map(report => 
+      report.id === verificationData.reportId 
+        ? { ...report, verifications: [...report.verifications, verificationData.verification] }
+        : report
+    ));
+  }, []);
+
+  const handleEvidenceProcessed = useCallback((data: unknown) => {
+    const evidenceData = data as { reportId: string; evidenceId: string; mediaEvidence: MediaEvidence };
+    setReports(prev => prev.map(report => 
+      report.id === evidenceData.reportId 
+        ? { 
+            ...report, 
+            evidence: report.evidence.map(ev => 
+              ev.id === evidenceData.evidenceId ? evidenceData.mediaEvidence : ev
+            )
+          }
+        : report
+    ));
+  }, []);
+
   // Load initial data
   useEffect(() => {
     loadReports();
@@ -78,69 +145,7 @@ export const CommunityReportingDashboard: React.FC<CommunityReportingDashboardPr
       reportingService.removeEventListener('verification_added', handleVerificationAdded);
       reportingService.removeEventListener('evidence_processed', handleEvidenceProcessed);
     };
-  }, [filters]);
-
-  const loadReports = async () => {
-    setLoading(true);
-    try {
-      const loadedReports = await reportingService.getReports({
-        location: userLocation ? { ...userLocation, radius: filters.radius * 1000 } : undefined,
-        incidentTypes: filters.incidentTypes.length > 0 ? filters.incidentTypes : undefined,
-        severity: filters.severity.length > 0 ? filters.severity : undefined,
-        verificationStatus: filters.verificationStatus.length > 0 ? filters.verificationStatus : undefined,
-        limit: 50,
-        sortBy: 'timestamp'
-      });
-      setReports(loadedReports);
-    } catch (error) {
-      console.error('Error loading reports:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadAnalytics = async () => {
-    try {
-      const analyticsData = await reportingService.getAnalytics(filters.timeframe);
-      setAnalytics(analyticsData);
-    } catch (error) {
-      console.error('Error loading analytics:', error);
-    }
-  };
-
-  // Real-time event handlers
-  const handleNewReport = useCallback((report: IncidentReport) => {
-    setReports(prev => [report, ...prev]);
-  }, []);
-
-  const handleReportUpdate = useCallback((data: { reportId: string; update: any }) => {
-    setReports(prev => prev.map(report => 
-      report.id === data.reportId 
-        ? { ...report, updates: [...report.updates, data.update] }
-        : report
-    ));
-  }, []);
-
-  const handleVerificationAdded = useCallback((data: { reportId: string; verification: CommunityVerification }) => {
-    setReports(prev => prev.map(report => 
-      report.id === data.reportId 
-        ? { ...report, verifications: [...report.verifications, data.verification] }
-        : report
-    ));
-  }, []);
-
-  const handleEvidenceProcessed = useCallback((data: { reportId: string; evidenceId: string; mediaEvidence: MediaEvidence }) => {
-    setReports(prev => prev.map(report => 
-      report.id === data.reportId 
-        ? { 
-            ...report, 
-            evidence: report.evidence.map(ev => 
-              ev.id === data.evidenceId ? data.mediaEvidence : ev
-            )
-          }
-        : report
-    ));
-  }, []);
+  }, [loadReports, loadAnalytics, handleNewReport, handleReportUpdate, handleVerificationAdded, handleEvidenceProcessed, reportingService]);
 
   // Submit new report
   const handleSubmitReport = async () => {

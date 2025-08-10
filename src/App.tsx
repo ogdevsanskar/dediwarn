@@ -74,7 +74,7 @@ const App: React.FC = () => {
               return (
                 <button
                   key={view.id}
-                  onClick={() => setActiveView(view.id as any)}
+                  onClick={() => setActiveView(view.id as 'integration' | 'community' | 'visualization' | 'offline')}
                   className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     activeView === view.id
                       ? 'bg-blue-100 text-blue-700 border border-blue-200'

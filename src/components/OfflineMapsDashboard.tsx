@@ -10,7 +10,7 @@ interface MapTile {
 }
 
 interface OfflineMapsDashboardProps {
-  // Add any props you need
+  className?: string;
 }
 
 export const OfflineMapsDashboard: React.FC<OfflineMapsDashboardProps> = () => {

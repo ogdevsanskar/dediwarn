@@ -3,7 +3,7 @@
  * Real-time volunteer coordination and community management interface
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Users,
   MapPin,
@@ -52,25 +52,19 @@ const VolunteerNetworkDashboard: React.FC<VolunteerNetworkDashboardProps> = ({
 
   const volunteerService = VolunteerNetworkService.getInstance();
 
-  useEffect(() => {
-    if (isVisible) {
-      loadData();
-      setupRealTimeUpdates();
-    }
-  }, [isVisible]);
-
-  const loadData = () => {
+  const loadData = useCallback(() => {
     setVolunteers(volunteerService.getAllVolunteers());
     setMissions(volunteerService.getAllMissions());
     setTrainingPrograms(volunteerService.getAllTrainingPrograms());
-  };
+  }, [volunteerService]);
 
-  const setupRealTimeUpdates = () => {
+  const setupRealTimeUpdates = useCallback(() => {
     // Real-time event listeners
-    volunteerService.addEventListener('volunteer-status-changed', (data: any) => {
+    volunteerService.addEventListener('volunteer-status-changed', (data: unknown) => {
+      const eventData = data as { volunteerId: string; status: 'available' | 'busy' | 'on-mission' | 'offline' };
       setVolunteers(prev => prev.map(v => 
-        v.id === data.volunteerId 
-          ? { ...v, availability: { ...v.availability, status: data.status } }
+        v.id === eventData.volunteerId 
+          ? { ...v, availability: { ...v.availability, status: eventData.status } }
           : v
       ));
     });
@@ -79,10 +73,18 @@ const VolunteerNetworkDashboard: React.FC<VolunteerNetworkDashboardProps> = ({
       loadData();
     });
 
-    volunteerService.addEventListener('volunteer-coordination', (data: any) => {
-      setVolunteerMatches(data.matches);
+    volunteerService.addEventListener('volunteer-coordination', (data: unknown) => {
+      const eventData = data as { matches: VolunteerMatch[] };
+      setVolunteerMatches(eventData.matches);
     });
-  };
+  }, [loadData, volunteerService]);
+
+  useEffect(() => {
+    if (isVisible) {
+      loadData();
+      setupRealTimeUpdates();
+    }
+  }, [isVisible, loadData, setupRealTimeUpdates]);
 
   const handleCoordinateVolunteers = async (missionId: string) => {
     const matches = await volunteerService.coordinateVolunteers(missionId);
@@ -218,7 +220,7 @@ const VolunteerNetworkDashboard: React.FC<VolunteerNetworkDashboardProps> = ({
           <select
             className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value as any)}
+            onChange={(e) => setFilterStatus(e.target.value as 'all' | 'available' | 'busy' | 'on-mission')}
             title="Filter volunteers by status"
           >
             <option value="all">All Status</option>
@@ -610,7 +612,7 @@ const VolunteerNetworkDashboard: React.FC<VolunteerNetworkDashboardProps> = ({
             ].map(({ key, label, icon: Icon }) => (
               <button
                 key={key}
-                onClick={() => setActiveTab(key as any)}
+                onClick={() => setActiveTab(key as 'overview' | 'volunteers' | 'missions' | 'training' | 'recognition')}
                 className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                   activeTab === key
                     ? 'border-blue-500 text-blue-600'

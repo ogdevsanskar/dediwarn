@@ -102,8 +102,8 @@ export const AnalyticsDashboard: React.FC = () => {
           location: locations[Math.floor(Math.random() * locations.length)],
           timestamp,
           affected: Math.floor(Math.random() * 10000),
-          severity: ['Low', 'Medium', 'High', 'Critical'][Math.floor(Math.random() * 4)] as any,
-          status: ['Active', 'Monitoring', 'Resolved'][Math.floor(Math.random() * 3)] as any
+          severity: ['Low', 'Medium', 'High', 'Critical'][Math.floor(Math.random() * 4)] as 'Low' | 'Medium' | 'High' | 'Critical',
+          status: ['Active', 'Monitoring', 'Resolved'][Math.floor(Math.random() * 3)] as 'Active' | 'Monitoring' | 'Resolved'
         });
       }
 
@@ -220,7 +220,7 @@ export const AnalyticsDashboard: React.FC = () => {
   const StatCard = ({ title, value, icon: Icon, color, subtitle }: {
     title: string;
     value: string | number;
-    icon: any;
+    icon: React.ComponentType<{ className?: string }>;
     color: string;
     subtitle?: string;
   }) => (
@@ -271,7 +271,7 @@ export const AnalyticsDashboard: React.FC = () => {
                 id="timeRangeSelect"
                 aria-label="Select Time Range"
                 value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value as any)}
+                onChange={(e) => setTimeRange(e.target.value as '24h' | '7d' | '30d' | '1y')}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="24h">Last 24 Hours</option>

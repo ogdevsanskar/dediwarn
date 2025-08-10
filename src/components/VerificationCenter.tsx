@@ -3,7 +3,7 @@
  * Interface for users to verify and validate incident reports
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Shield, CheckCircle, XCircle, AlertTriangle, Eye,
   MessageSquare, Star, Clock, MapPin, Camera,
@@ -37,11 +37,7 @@ export const VerificationCenter: React.FC<VerificationCenterProps> = ({
 
   const reportingService = CommunityReportingService.getInstance();
 
-  useEffect(() => {
-    loadPendingReports();
-  }, [filter]);
-
-  const loadPendingReports = async () => {
+  const loadPendingReports = useCallback(async () => {
     setLoading(true);
     try {
       const reports = await reportingService.getReports({
@@ -61,7 +57,11 @@ export const VerificationCenter: React.FC<VerificationCenterProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, reportingService, userId]);
+
+  useEffect(() => {
+    loadPendingReports();
+  }, [loadPendingReports]);
 
   const handleSubmitVerification = async () => {
     if (!selectedReport) return;
@@ -257,7 +257,7 @@ export const VerificationCenter: React.FC<VerificationCenterProps> = ({
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setVerificationForm(prev => ({ ...prev, status: option.value as any }))}
+                  onClick={() => setVerificationForm(prev => ({ ...prev, status: option.value as 'confirmed' | 'disputed' | 'needs_clarification' | 'false_report' }))}
                   className={`p-3 border rounded-lg transition-colors flex items-center gap-2 ${
                     verificationForm.status === option.value
                       ? `border-${option.color}-500 bg-${option.color}-50`

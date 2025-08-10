@@ -10,19 +10,23 @@ export const Header: React.FC = () => {
 
   const mainNavItems = [
     { name: 'Dashboard', path: '/' },
+    { name: 'Global Hub', path: '/enhanced-dashboard' },
+    { name: 'Collaboration', path: '/collaboration' },
+    { name: 'Reporting', path: '/reporting' },
+    { name: 'Education', path: '/education' },
     { name: 'Map', path: '/map' },
-    { name: 'Contracts', path: '/contracts' },
-    { name: 'Network', path: '/network' },
-    { name: 'Emergency', path: '/emergency-communication' },
   ];
 
   const additionalNavItems = [
     { name: 'Original Home', path: '/home' },
+    { name: 'Contracts', path: '/contracts' },
     { name: 'Analytics', path: '/analytics' },
     { name: 'Admin Panel', path: '/admin' },
+    { name: 'Network', path: '/network' },
     { name: 'Donations', path: '/donations' },
     { name: 'Volunteers', path: '/volunteers' },
     { name: 'Prediction', path: '/prediction' },
+    { name: 'Emergency', path: '/emergency-communication' },
     { name: 'Device Tools', path: '/device-capabilities' },
     { name: 'Live Stream', path: '/live-streaming' },
   ];

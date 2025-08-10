@@ -59,9 +59,93 @@ export interface AIRouteAnalysis {
   confidence: number; // 0-100
 }
 
+interface MLPredictionResult {
+  score: number;
+  congestion: number;
+  speed: number;
+  confidence: number;
+  primaryRisk: string;
+  mitigation: string;
+}
+
+interface UserProfile {
+  accessibilityNeeds?: string[];
+  mobilityLimitations?: string[];
+  emergencyContacts?: string[];
+  medicalConditions?: string[];
+  vehicleType?: string;
+  familySize?: number;
+  vulnerabilities?: {
+    mobility?: string;
+    health?: string;
+  };
+  resources?: {
+    pets?: number;
+    vehicle?: boolean;
+  };
+  preferences?: {
+    transportMode?: string;
+    routeType?: string;
+  };
+}
+
+interface WeatherConditions {
+  temperature: number;
+  humidity: number;
+  windSpeed: number;
+  precipitation: number;
+  visibility: number;
+  alerts: string[];
+}
+
+interface Incident {
+  type: string;
+  severity: number;
+  location: { lat: number; lng: number };
+  description: string;
+}
+
+interface EmergencyUpdate {
+  id: string;
+  type: string;
+  priority: number;
+  message: string;
+  location?: { lat: number; lng: number };
+  timestamp: Date;
+}
+
+interface RiskFactor {
+  type: string;
+  severity: number;
+  location: { lat: number; lng: number };
+  mitigation: string;
+}
+
+interface RoutePrediction {
+  timeframe: string;
+  congestionProbability: number;
+  weatherImpact: number;
+  recommendation: string;
+}
+
+interface RouteConstraints {
+  avoidHighways?: boolean;
+  maxDistance?: number;
+  requireShelters?: boolean;
+  accessibilityNeeds?: string[];
+}
+
+interface MLModel {
+  name: string;
+  accuracy: number;
+  lastTrained: Date;
+  features: string[];
+  predict: (features: number[]) => MLPredictionResult;
+}
+
 class AIRouteOptimizer {
   private static instance: AIRouteOptimizer;
-  private mlModels: Map<string, any> = new Map();
+  private mlModels: Map<string, MLModel> = new Map();
 
   // Machine Learning Models for Route Optimization
   private models = {
@@ -102,9 +186,13 @@ class AIRouteOptimizer {
   private initializeMLModels(): void {
     // Simulate ML model initialization
     Object.keys(this.models).forEach(modelKey => {
+      const model = this.models[modelKey as keyof typeof this.models];
       this.mlModels.set(modelKey, {
-        predict: (features: number[]) => this.simulateMLPrediction(features),
-        confidence: this.models[modelKey as keyof typeof this.models].accuracy
+        name: model.name,
+        accuracy: model.accuracy,
+        lastTrained: model.lastTrained,
+        features: model.features,
+        predict: (features: number[]) => this.simulateMLPrediction(features)
       });
     });
   }
@@ -116,13 +204,8 @@ class AIRouteOptimizer {
     startPoint: { lat: number; lng: number },
     endPoint: { lat: number; lng: number },
     disasterType: string,
-    userProfile: any,
-    constraints?: {
-      avoidHighways?: boolean;
-      maxDistance?: number;
-      requireShelters?: boolean;
-      accessibilityNeeds?: string[];
-    }
+    userProfile: UserProfile,
+    constraints?: RouteConstraints
   ): Promise<{
     routes: RouteSegment[][];
     analysis: AIRouteAnalysis[];
@@ -152,9 +235,7 @@ class AIRouteOptimizer {
       }
 
       // Generate AI recommendations
-      const aiRecommendations = await this.generateRouteRecommendations(
-        analyses
-      );
+      const aiRecommendations = await this.generateRouteRecommendations();
 
       recommendations.push(...aiRecommendations);
 
@@ -201,6 +282,9 @@ class AIRouteOptimizer {
         
         // Use ML model to predict traffic
         const trafficModel = this.mlModels.get('trafficPrediction');
+        if (!trafficModel) {
+          throw new Error('Traffic prediction model not initialized');
+        }
         const prediction = trafficModel.predict(features);
 
         const segmentPrediction = {
@@ -253,6 +337,9 @@ class AIRouteOptimizer {
     for (const segment of route) {
       const features = this.prepareSafetyFeatures(segment, disasterType);
       const safetyModel = this.mlModels.get('safetyAssessment');
+      if (!safetyModel) {
+        throw new Error('Safety assessment model not initialized');
+      }
       const safety = safetyModel.predict(features);
 
       totalSafety += safety.score;
@@ -284,7 +371,7 @@ class AIRouteOptimizer {
    * Generate personalized route recommendations
    */
   async generatePersonalizedRecommendations(
-    userProfile: any,
+    userProfile: UserProfile,
     disasterType: string
   ): Promise<string[]> {
     const recommendations = [];
@@ -295,7 +382,7 @@ class AIRouteOptimizer {
       recommendations.push('Avoiding routes with steep terrain or stairs');
     }
 
-    if (userProfile.resources?.pets > 0) {
+    if (userProfile.resources?.pets && userProfile.resources.pets > 0) {
       recommendations.push('Selected routes accommodate pet-friendly shelters');
     }
 
@@ -326,14 +413,14 @@ class AIRouteOptimizer {
    * Real-time route adaptation based on changing conditions
    */
   async adaptRouteRealTime(
-    currentRoute: RouteSegment[],
+    _currentRoute: RouteSegment[],
     currentPosition: { lat: number; lng: number },
     endPoint: { lat: number; lng: number },
     newConditions: {
       traffic?: TrafficData[];
-      weather?: any;
-      incidents?: any[];
-      emergencyUpdates?: any[];
+      weather?: WeatherConditions;
+      incidents?: Incident[];
+      emergencyUpdates?: EmergencyUpdate[];
     }
   ): Promise<{
     shouldAdapt: boolean;
@@ -342,11 +429,7 @@ class AIRouteOptimizer {
     urgency: 'low' | 'medium' | 'high' | 'critical';
   }> {
     // Analyze if adaptation is necessary
-    const adaptationScore = await this.calculateAdaptationNeed(
-      currentRoute,
-      currentPosition,
-      newConditions
-    );
+    const adaptationScore = await this.calculateAdaptationNeed();
 
     if (adaptationScore < 30) {
       return {
@@ -391,7 +474,7 @@ class AIRouteOptimizer {
     start: { lat: number; lng: number },
     end: { lat: number; lng: number },
     _disasterType: string,
-    constraints: any = {}
+    constraints: RouteConstraints = {}
   ): Promise<RouteSegment[][]> {
     // Simulate route generation - in production, integrate with routing APIs
     const routes: RouteSegment[][] = [];
@@ -482,11 +565,14 @@ class AIRouteOptimizer {
   private async analyzeRouteWithAI(
     route: RouteSegment[],
     disasterType: string,
-    userProfile: any
+    userProfile: UserProfile
   ): Promise<AIRouteAnalysis> {
     // Simulate AI analysis
     const features = this.prepareRouteFeatures(route, disasterType, userProfile);
     const evacuationModel = this.mlModels.get('evacuationOptimizer');
+    if (!evacuationModel) {
+      throw new Error('Evacuation optimizer model not initialized');
+    }
     const analysis = evacuationModel.predict(features);
 
     return {
@@ -528,7 +614,7 @@ class AIRouteOptimizer {
   private prepareRouteFeatures(
     route: RouteSegment[],
     disasterType: string,
-    userProfile: any
+    userProfile: UserProfile
   ): number[] {
     const totalDistance = route.reduce((sum, seg) => sum + seg.distance, 0);
     const avgSafety = route.reduce((sum, seg) => sum + seg.safetyScore, 0) / route.length;
@@ -546,7 +632,7 @@ class AIRouteOptimizer {
     ];
   }
 
-  private simulateMLPrediction(features: number[]): any {
+  private simulateMLPrediction(features: number[]): MLPredictionResult {
     // Simulate ML model prediction
     const baseScore = features.reduce((sum, f) => sum + f, 0) / features.length;
     const noise = (Math.random() - 0.5) * 0.2;
@@ -573,9 +659,7 @@ class AIRouteOptimizer {
   }
 
   // Additional helper methods would be implemented here...
-  private async generateRouteRecommendations(
-    _analyses: AIRouteAnalysis[]
-  ): Promise<string[]> {
+  private async generateRouteRecommendations(): Promise<string[]> {
     return ['AI optimized evacuation routes based on current conditions'];
   }
   /**
@@ -598,15 +682,12 @@ class AIRouteOptimizer {
     };
   }
 
-  private async calculateAdaptationNeed(
-    _route: RouteSegment[],
-    _position: { lat: number; lng: number },
-    _conditions: any
-  ): Promise<number> {
+  private async calculateAdaptationNeed(): Promise<number> {
     return Math.random() * 100; // Simulated adaptation score
   }
 
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private getAdaptationReason(conditions: any): string {
     if (conditions?.traffic && conditions.traffic.length > 0) {
       return 'Traffic conditions have significantly changed due to recent updates.';
@@ -614,7 +695,7 @@ class AIRouteOptimizer {
     return 'Traffic conditions have significantly changed';
   }
 
-  private identifyRiskFactors(route: RouteSegment[]): any[] {
+  private identifyRiskFactors(route: RouteSegment[]): RiskFactor[] {
     return [
       {
         type: 'congestion',
@@ -625,7 +706,7 @@ class AIRouteOptimizer {
     ];
   }
 
-  private generateRoutePredictions(): any[] {
+  private generateRoutePredictions(): RoutePrediction[] {
     return [
       {
         timeframe: 'next 2 hours',

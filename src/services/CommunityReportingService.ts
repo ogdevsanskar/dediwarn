@@ -5,8 +5,11 @@
 
 import { ReactNode } from "react";
 
+// Event handler types
+type EventHandler<T = unknown> = (data: T) => void;
+
 export interface IncidentReport {
-  status(status: any): import("react").ReactNode;
+  status(status: string): ReactNode;
   id: string;
   reporterId: string;
   reporterName: string;
@@ -158,7 +161,7 @@ class CommunityReportingService {
   private static instance: CommunityReportingService;
   private reports: Map<string, IncidentReport> = new Map();
   private reporters: Map<string, ReporterProfile> = new Map();
-  private eventHandlers: Map<string, Function[]> = new Map();
+  private eventHandlers: Map<string, EventHandler[]> = new Map();
   private uploadQueue: Map<string, MediaEvidence> = new Map();
   private verificationQueue: string[] = [];
 
@@ -458,14 +461,14 @@ class CommunityReportingService {
   /**
    * Real-time event system
    */
-  addEventListener(event: string, handler: Function): void {
+  addEventListener(event: string, handler: EventHandler): void {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, []);
     }
     this.eventHandlers.get(event)!.push(handler);
   }
 
-  removeEventListener(event: string, handler: Function): void {
+  removeEventListener(event: string, handler: EventHandler): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
       const index = handlers.indexOf(handler);
@@ -475,7 +478,7 @@ class CommunityReportingService {
     }
   }
 
-  private broadcastEvent(event: string, data: any): void {
+  private broadcastEvent(event: string, data: unknown): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
       handlers.forEach(handler => {
@@ -861,8 +864,12 @@ class CommunityReportingService {
       
       if (cachedReports) {
         const reportsData = JSON.parse(cachedReports);
-        this.reports = new Map(reportsData.map(([id, report]: [string, any]) => [
-          id, { ...report, timestamp: new Date(report.timestamp) }
+        this.reports = new Map(reportsData.map(([id, report]: [string, Record<string, unknown>]) => [
+          id, { 
+            ...report, 
+            timestamp: new Date(report.timestamp as string),
+            status: (status: string) => status 
+          } as IncidentReport
         ]));
       }
       

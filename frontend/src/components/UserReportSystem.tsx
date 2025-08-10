@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { MapPin, Send, Image, Video, AlertTriangle, Clock, X } from 'lucide-react';
 
 interface UserReport {
@@ -59,7 +59,7 @@ export const UserReportSystem: React.FC<UserReportSystemProps> = ({
   const videoInputRef = useRef<HTMLInputElement>(null);
 
   // Get current location
-  const getCurrentLocation = () => {
+  const getCurrentLocation = useCallback(() => {
     setIsGettingLocation(true);
     
     if (navigator.geolocation) {
@@ -94,7 +94,7 @@ export const UserReportSystem: React.FC<UserReportSystemProps> = ({
       setIsGettingLocation(false);
       alert('Geolocation is not supported by this browser');
     }
-  };
+  }, [userLocation]);
 
   // Handle file upload
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'video') => {
@@ -176,7 +176,7 @@ export const UserReportSystem: React.FC<UserReportSystemProps> = ({
     if (isOpen && !currentLocation) {
       getCurrentLocation();
     }
-  }, [isOpen]);
+  }, [isOpen, currentLocation, getCurrentLocation]);
 
   return (
     <>

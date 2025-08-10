@@ -3,6 +3,17 @@
 
 import { initializeButtonFunctionality } from '../components/ButtonFunctionality';
 
+// Interface for PWA install prompt event
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+// Extend HTMLElement interface for storing install event
+interface HTMLElementWithInstallEvent extends HTMLElement {
+  installEvent?: BeforeInstallPromptEvent;
+}
+
 // Initialize app-wide functionality
 export const initializeApp = () => {
   console.log('🚀 Initializing DeDiWARN Application...');
@@ -76,7 +87,7 @@ const initializePWAFeatures = () => {
   // Handle app install prompt
   window.addEventListener('beforeinstallprompt', (event) => {
     event.preventDefault();
-    showInstallPrompt(event);
+    showInstallPrompt(event as BeforeInstallPromptEvent);
   });
   
   // Request notification permission
@@ -392,7 +403,7 @@ const checkEmergencyNotifications = () => {
 };
 
 // Show install prompt
-const showInstallPrompt = (installEvent: any) => {
+const showInstallPrompt = (installEvent: BeforeInstallPromptEvent) => {
   const prompt = document.createElement('div');
   prompt.style.cssText = `
     position: fixed;
@@ -421,7 +432,7 @@ const showInstallPrompt = (installEvent: any) => {
   `;
   
   // Store the event for the install button
-  (prompt as any).installEvent = installEvent;
+  (prompt as HTMLElementWithInstallEvent).installEvent = installEvent;
   
   document.body.appendChild(prompt);
 };
@@ -449,8 +460,16 @@ const initializeOfflineCapabilities = () => {
   }));
 };
 
+// Extend window interface for emergency functions
+declare global {
+  interface Window {
+    startEmergencyCamera?: () => void;
+    shareEmergencyLocation?: () => void;
+  }
+}
+
 // Make functions globally available for emergency menu
-(window as any).startEmergencyCamera = startEmergencyCamera;
-(window as any).shareEmergencyLocation = shareEmergencyLocation;
+window.startEmergencyCamera = startEmergencyCamera;
+window.shareEmergencyLocation = shareEmergencyLocation;
 
 export default { initializeApp };

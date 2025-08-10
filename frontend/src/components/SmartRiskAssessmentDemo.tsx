@@ -91,17 +91,6 @@ const SmartRiskAssessmentDemo: React.FC<SmartRiskAssessmentDemoProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (isActive) {
-      runCompleteAnalysis();
-      
-      if (autoRefresh) {
-        const interval = setInterval(runCompleteAnalysis, 30000); // Every 30 seconds for demo
-        return () => clearInterval(interval);
-      }
-    }
-  }, [isActive, autoRefresh, userLocation]);
-
   const runCompleteAnalysis = async () => {
     setIsAnalyzing(true);
     setAnalysisProgress(0);
@@ -139,9 +128,7 @@ const SmartRiskAssessmentDemo: React.FC<SmartRiskAssessmentDemoProps> = ({
       setAnalysisProgress(80);
       
       const routes = await riskAssessment.optimizeEvacuationRoutes(
-        userLocation,
-        demoUserProfile,
-        disasterPredictions[0]?.disasterType || 'general'
+        userLocation
       );
       setEvacuationRoutes(routes);
       setMlModelStats(prev => ({ ...prev, routesOptimized: routes.length }));
@@ -165,6 +152,20 @@ const SmartRiskAssessmentDemo: React.FC<SmartRiskAssessmentDemoProps> = ({
       setTimeout(() => setIsAnalyzing(false), 1000);
     }
   };
+
+  useEffect(() => {
+    if (isActive) {
+      runCompleteAnalysis();
+      
+      if (autoRefresh) {
+        const interval = setInterval(runCompleteAnalysis, 30000); // Every 30 seconds for demo
+        return () => clearInterval(interval);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive, autoRefresh, userLocation]);
+
+  // Remove the old function definition below
 
   const calculateOverallRisk = (risks: RiskFactor[], predictions: DisasterPrediction[]): 'low' | 'moderate' | 'high' | 'critical' => {
     const avgRiskSeverity = risks.length > 0 

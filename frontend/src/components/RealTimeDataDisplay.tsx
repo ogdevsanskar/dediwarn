@@ -238,7 +238,7 @@ const RealTimeDataDisplay: React.FC<RealTimeDataDisplayProps> = ({
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setSelectedTab(tab.id as any)}
+              onClick={() => setSelectedTab(tab.id as 'alerts' | 'earthquakes' | 'weather' | 'traffic' | 'hospitals')}
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
                 selectedTab === tab.id
                   ? 'bg-blue-500 text-white'

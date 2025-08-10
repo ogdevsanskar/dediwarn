@@ -127,7 +127,7 @@ class OfflineMapsService {
   private isOnline = navigator.onLine;
   private gpsWatchId: number | null = null;
   private navigation: GPSNavigation = { isActive: false, routeProgress: { distanceTraveled: 0, distanceRemaining: 0, timeElapsed: 0, estimatedTimeRemaining: 0 } };
-  private eventHandlers: Map<string, Function[]> = new Map();
+  private eventHandlers: Map<string, Array<(...args: unknown[]) => void>> = new Map();
 
   // Map tile providers
   private tileProviders = {
@@ -568,14 +568,14 @@ class OfflineMapsService {
   /**
    * Event handling
    */
-  addEventListener(event: string, handler: Function): void {
+  addEventListener(event: string, handler: (...args: unknown[]) => void): void {
     if (!this.eventHandlers.has(event)) {
       this.eventHandlers.set(event, []);
     }
     this.eventHandlers.get(event)!.push(handler);
   }
 
-  removeEventListener(event: string, handler: Function): void {
+  removeEventListener(event: string, handler: (...args: unknown[]) => void): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
       const index = handlers.indexOf(handler);
@@ -585,7 +585,7 @@ class OfflineMapsService {
     }
   }
 
-  private broadcastEvent(event: string, data: any): void {
+  private broadcastEvent(event: string, data: unknown): void {
     const handlers = this.eventHandlers.get(event);
     if (handlers) {
       handlers.forEach(handler => {

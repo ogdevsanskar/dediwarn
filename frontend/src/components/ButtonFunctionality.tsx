@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useState } from 'react';
 import { 
   RefreshCw
@@ -6,7 +7,8 @@ import {
 // Global button functionality manager
 export class ButtonFunctionality {
   private static instance: ButtonFunctionality;
-  private callbacks: Map<string, Function> = new Map();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private callbacks: Map<string, (...args: any[]) => any> = new Map();
   private analytics: Map<string, number> = new Map();
 
   public static getInstance(): ButtonFunctionality {
@@ -17,11 +19,13 @@ export class ButtonFunctionality {
   }
 
   // Register button action
-  public registerAction(buttonId: string, callback: Function): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public registerAction(buttonId: string, callback: (...args: any[]) => any): void {
     this.callbacks.set(buttonId, callback);
   }
 
   // Execute button action
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public executeAction(buttonId: string, ...args: any[]): void {
     const callback = this.callbacks.get(buttonId);
     if (callback) {
@@ -219,7 +223,7 @@ export const dataActions = {
   },
 
   // Export report
-  exportReport: (data: any, filename: string = 'emergency-report') => {
+  exportReport: (data: Record<string, unknown>, filename: string = 'emergency-report') => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -320,7 +324,7 @@ export const searchActions = {
   },
 
   // Apply filter
-  applyFilter: (filters: Record<string, any>) => {
+  applyFilter: (filters: Record<string, unknown>) => {
     console.log('Applying filters:', filters);
     // Implement filter logic
   },

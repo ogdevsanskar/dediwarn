@@ -13,7 +13,7 @@ interface MainDashboardProps {
 interface QuickStat {
   title: string;
   value: string | number;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   color: string;
   trend?: number;
 }
@@ -103,6 +103,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ userLocation }) =>
       setActiveAlerts(mockAlerts);
       setIsLoading(false);
     }, 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Get severity color
@@ -198,7 +199,7 @@ export const MainDashboard: React.FC<MainDashboardProps> = ({ userLocation }) =>
             return (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key as any)}
+                onClick={() => setActiveTab(tab.key as 'overview' | 'map' | 'reports' | 'resources' | 'volunteers' | 'analytics')}
                 className={`flex items-center px-4 py-3 rounded-lg transition-colors ${
                   activeTab === tab.key
                     ? 'bg-blue-600 text-white'

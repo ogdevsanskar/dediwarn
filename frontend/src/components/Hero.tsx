@@ -20,7 +20,7 @@ export const Hero: React.FC = () => {
       setCurrentStat((prev) => (prev + 1) % stats.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [stats.length]);
 
   const handleLaunchDashboard = () => {
     window.location.href = '/dashboard';

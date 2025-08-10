@@ -280,6 +280,7 @@ export const VolunteerPortal: React.FC<VolunteerPortalProps> = ({
   useEffect(() => {
     setVolunteers(mockVolunteers);
     setMissions(mockMissions);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filter missions
@@ -387,7 +388,7 @@ export const VolunteerPortal: React.FC<VolunteerPortalProps> = ({
           return (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key as any)}
+              onClick={() => setActiveTab(tab.key as 'missions' | 'volunteers' | 'profile')}
               className={`flex-1 flex items-center justify-center px-4 py-3 rounded-lg transition-colors ${
                 activeTab === tab.key
                   ? 'bg-blue-600 text-white'
