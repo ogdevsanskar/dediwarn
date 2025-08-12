@@ -1,11 +1,10 @@
 // Backend Security Middleware for DeDiWARN API
 // Implements CSP headers, rate limiting, and input validation
 
-import * as express from 'express';
+import { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import validator from 'validator';
-import { Request, Response, NextFunction } from 'express';
 
 // Content Security Policy configuration
 const cspConfig = {
@@ -134,7 +133,7 @@ export const validateEmergencyCall = (req: Request, res: Response, next: NextFun
     }
 
     next();
-  } catch (error) {
+  } catch {
     return res.status(400).json({
       error: 'Input validation failed',
       code: 'VALIDATION_ERROR'
@@ -158,7 +157,7 @@ export const validateLocation = (req: Request, res: Response, next: NextFunction
     }
 
     next();
-  } catch (error) {
+  } catch {
     return res.status(400).json({
       error: 'Location validation failed',
       code: 'VALIDATION_ERROR'
@@ -180,7 +179,7 @@ export const sanitizeInput = (req: Request, res: Response, next: NextFunction) =
     }
 
     next();
-  } catch (error) {
+  } catch {
     return res.status(400).json({
       error: 'Input sanitization failed',
       code: 'SANITIZATION_ERROR'

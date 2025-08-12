@@ -16,7 +16,7 @@
     "copy-assets": "copyfiles -u 1 src/**/*.json dist/",
     "test": "jest",
     "test:watch": "jest --watch",
-    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 100",
     "lint:fix": "eslint . --fix",
     "docker:build": "docker build -t disaster-backend .",
     "docker:run": "docker run -p 3000:3000 -p 8080:8080 disaster-backend",

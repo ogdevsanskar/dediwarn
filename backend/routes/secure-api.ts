@@ -1,9 +1,9 @@
 // Secure API Router for DeDiWARN Backend
 // Implements all security middleware and protected endpoints
 
-import * as express from 'express';
-import securityMiddleware from '../middleware/security';
+import express from 'express';
 import { Request, Response } from 'express';
+import securityMiddleware from '../middleware/security';
 
 const router = express.Router();
 
