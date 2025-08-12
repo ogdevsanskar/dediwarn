@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, Bot, Phone, Mail, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
-import { getApiUrl, API_CONFIG } from '../config/api';
+import { aiAssistantService } from '../services/aiAssistantService';
 
 // Web Speech API types
 interface SpeechRecognitionEventResult {
@@ -104,11 +104,12 @@ export const AIAssistant: React.FC = () => {
       const welcomeMessage: Message = {
         id: 'welcome',
         type: 'assistant',
-        content: '👋 Hello! I\'m your AI Disaster Management Assistant. I provide real-time disaster analysis and emergency guidance:\n\n🔥 **UPDATED VERSION - MODIFICATIONS WORKING!** 🔥\n\n🌍 **Real-time Monitoring:**\n• Earthquake activity and seismic data\n• Weather patterns and severe storm tracking\n• Flood levels and water monitoring\n• Emergency alerts and government advisories\n\n🚨 **Emergency Services:**\n• Instant SMS alerts to contacts (6001163688)\n• Emergency service connections\n• Location-based risk assessment\n• Voice commands and TTS responses\n\n🎯 **Ask me questions like:**\n• "Is there earthquake activity in Delhi?"\n• "What\'s the flood risk in Assam?"\n• "Current weather alerts for Mumbai?"\n\nHow can I help you stay safe today?',
+        content: '👋 **ENHANCED AI DISASTER MANAGEMENT ASSISTANT** 🚨\n\n🔥 **REAL-TIME API INTEGRATION ACTIVE!** 🔥\n\n🌍 **Live Data Sources:**\n• USGS Earthquake Monitoring (Real-time seismic data)\n• OpenWeatherMap API (Current weather & forecasts)\n• NASA Climate Data (Global climate indicators)\n• Real-time donation tracking & funding status\n• Emergency response system analytics\n\n🎯 **Enhanced Capabilities:**\n• **Weather**: "What\'s the weather in Mumbai?" - Live conditions\n• **Earthquakes**: "Recent earthquakes in California?" - USGS data\n• **Climate**: "Current climate change status?" - Scientific data\n• **Donations**: "How can I donate to relief?" - Live funding info\n• **Emergency**: "I need help!" - Immediate response protocols\n\n🚨 **Emergency Features:**\n• Instant SMS alerts to 6001163688\n• Voice commands and text-to-speech\n• Real-time evacuation guidance\n• Live emergency resource tracking\n\n💡 **Try asking specific questions for real-time accurate data!**',
         timestamp: new Date(),
         actions: [
           { type: 'sms', label: 'Test Emergency SMS', data: 'test_sms' },
-          { type: 'call', label: 'Emergency Contacts', data: 'contacts' }
+          { type: 'call', label: 'Emergency Contacts', data: 'contacts' },
+          { type: 'email', label: 'Weather Update', data: 'weather_check' }
         ]
       };
       setMessages([welcomeMessage]);
@@ -163,34 +164,25 @@ export const AIAssistant: React.FC = () => {
 
   const simulateAIResponse = async (userMessage: string): Promise<Message> => {
     try {
-      // Call backend AI chat API for real-time analysis
-      const response = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.AI_CHAT), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage,
-          location: getUserLocation()
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        return {
-          id: Date.now().toString(),
-          type: 'assistant',
-          content: data.response,
-          timestamp: new Date(),
-          actions: generateActionsFromResponse(data.intent)
-        };
-      }
+      // Use the enhanced AI assistant service for real-time analysis
+      const aiResponse = await aiAssistantService.generateResponse(userMessage, getUserLocation());
+      
+      return {
+        id: Date.now().toString(),
+        type: 'assistant',
+        content: aiResponse.response,
+        timestamp: new Date(),
+        actions: aiResponse.actions?.map(action => ({
+          type: action.type === 'navigation' ? 'email' : action.type,
+          label: action.label,
+          data: action.data
+        })) || []
+      };
     } catch (error) {
-      console.error('AI API Error:', error);
+      console.error('AI Assistant Service Error:', error);
+      // Fallback to enhanced local responses with disaster focus
+      return generateLocalDisasterResponse(userMessage);
     }
-
-    // Fallback to enhanced local responses with disaster focus
-    return generateLocalDisasterResponse(userMessage);
   };
 
   const generateLocalDisasterResponse = (userMessage: string): Message => {
@@ -261,28 +253,6 @@ export const AIAssistant: React.FC = () => {
         { type: 'call', label: 'Emergency Contacts', data: 'contacts' }
       ]
     };
-  };
-
-  const generateActionsFromResponse = (intent: string) => {
-    const actions: Array<{ type: 'sms' | 'call'; label: string; data: string }> = [
-      { type: 'sms', label: 'Send Alert SMS', data: 'alert_sms' }
-    ];
-
-    switch (intent) {
-      case 'earthquake':
-        actions.push({ type: 'call', label: 'Seismic Services', data: 'seismic' });
-        break;
-      case 'weather':
-        actions.push({ type: 'call', label: 'Weather Service', data: 'weather' });
-        break;
-      case 'flood':
-        actions.push({ type: 'call', label: 'Flood Response', data: 'flood_response' });
-        break;
-      default:
-        actions.push({ type: 'call', label: 'Emergency Services', data: 'emergency' });
-    }
-
-    return actions;
   };
 
   const getUserLocation = () => {
