@@ -5,25 +5,15 @@ import { Home } from './pages/Home';
 import { Warnings } from './pages/Warnings';
 import { SmartContracts } from './pages/SmartContracts';
 import { Analytics } from './pages/Analytics';
-import { Network } from './pages/Network';
+import { EmergencyCenter } from './pages/EmergencyCenter';
 import { Donations } from './pages/Donations';
 import { Volunteers } from './pages/Volunteers';
-import { Training } from './pages/Training';
-import { Prediction } from './pages/Prediction';
-import { Map } from './pages/Map';
 import { Dashboard } from './pages/Dashboard';
 import { MainDashboard } from './components/MainDashboard';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { AIAssistant } from './components/AIAssistant';
-import EmergencyCommunication from './components/EmergencyCommunication';
-import DeviceCapabilities from './components/DeviceCapabilities';
-import LiveStreaming from './components/LiveStreaming';
 import { NotificationCenter } from './components/NotificationCenter';
-import AdminPanel from './components/AdminPanel.tsx';
-import VideoCallSystem from './components/VideoCallSystem';
-import EmergencySystemIntegration from './components/EmergencySystemIntegration';
 import Collaboration from './pages/Collaboration';
-import CrowdsourcedReporting from './pages/CrowdsourcedReporting';
 import EnhancedDashboard from './pages/EnhancedDashboard';
 import EducationGamification from './pages/EducationGamification';
 import { initializeButtonFunctionality } from './components/ButtonFunctionality';
@@ -371,49 +361,10 @@ function App() {
             <Route path="/warnings" element={<Warnings />} />
             <Route path="/contracts" element={<SmartContracts />} />
             <Route path="/analytics" element={<Analytics />} />
-            <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/network" element={<Network />} />
+            <Route path="/emergency-communication" element={<EmergencyCenter />} />
             <Route path="/donations" element={<Donations />} />
             <Route path="/volunteers" element={<Volunteers />} />
-            <Route path="/training" element={<Training />} />
-            <Route path="/prediction" element={<Prediction />} />
-            <Route path="/map" element={<Map />} />
-            <Route path="/emergency-systems" element={<EmergencySystemIntegration />} />
-            <Route 
-              path="/video-call" 
-              element={<VideoCallSystem emergencyNumber="6001163688" />} 
-            />
-            <Route 
-              path="/emergency-communication" 
-              element={
-                <EmergencyCommunication
-                  emergencyType="general"
-                  userLocation={userLocation}
-                />
-              } 
-            />
-            <Route 
-              path="/device-capabilities" 
-              element={
-                <DeviceCapabilities
-                  onLocationUpdate={handleLocationUpdate}
-                  onDamageReport={handleDamageReport}
-                  onEnvironmentalData={handleEnvironmentalData}
-                />
-              } 
-            />
-            <Route 
-              path="/live-streaming" 
-              element={
-                <LiveStreaming
-                  userLocation={userLocation}
-                  userRole={userRole}
-                  onAlertReceived={handleAlertReceived}
-                />
-              } 
-            />
             <Route path="/collaboration" element={<Collaboration />} />
-            <Route path="/reporting" element={<CrowdsourcedReporting />} />
             <Route path="/enhanced-dashboard" element={<EnhancedDashboard />} />
             <Route path="/education" element={<EducationGamification />} />
           </Routes>
