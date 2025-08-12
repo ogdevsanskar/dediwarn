@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Plus, AlertCircle, CheckCircle, Clock, TrendingUp, Activity, Globe } from 'lucide-react';
 import { StatsCard } from './StatsCard';
+import { AlertDetailModal } from './AlertDetailModal';
+import { IncidentReportForm } from './IncidentReportForm';
+import { EmergencyResourceTracker } from './EmergencyResourceTracker';
 import './Dashboard.css';
 
 interface Warning {
@@ -43,6 +46,12 @@ export const Dashboard: React.FC = () => {
       txHash: '0x9abc...ijkl'
     }
   ]);
+
+  // Emergency features state
+  const [selectedAlert, setSelectedAlert] = useState<Warning | null>(null);
+  const [showIncidentReport, setShowIncidentReport] = useState(false);
+  const [showResourceTracker, setShowResourceTracker] = useState(false);
+  const [userLocation] = useState({ lat: 37.7749, lng: -122.4194 }); // Default to San Francisco
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -128,7 +137,7 @@ export const Dashboard: React.FC = () => {
             <table className="w-full">
               <thead className="bg-background">
                 <tr>
-                  {['Warning', 'Severity', 'Status', 'Location', 'Tx Hash', 'Timestamp'].map((header) => (
+                  {['Warning', 'Severity', 'Status', 'Location', 'Tx Hash', 'Timestamp', 'Actions'].map((header) => (
                     <th key={header} className="px-6 py-4 text-left text-xs font-medium text-textSecondary uppercase tracking-wider">
                       {header}
                     </th>
@@ -164,13 +173,88 @@ export const Dashboard: React.FC = () => {
                       </code>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-textSecondary">{warning.timestamp}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button
+                        onClick={() => setSelectedAlert(warning)}
+                        className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors"
+                      >
+                        View More
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+        
+        {/* Emergency Action Buttons */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <button
+            onClick={() => setShowIncidentReport(true)}
+            className="bg-red-600 hover:bg-red-700 text-white p-6 rounded-xl border border-red-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-red-500/20"
+          >
+            <Plus className="h-8 w-8 mx-auto mb-2" />
+            <h3 className="text-lg font-semibold mb-2">Report Emergency</h3>
+            <p className="text-sm text-red-100">Report incidents with AI classification</p>
+          </button>
+          
+          <button
+            onClick={() => setShowResourceTracker(!showResourceTracker)}
+            className="bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-xl border border-blue-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20"
+          >
+            <Activity className="h-8 w-8 mx-auto mb-2" />
+            <h3 className="text-lg font-semibold mb-2">Track Resources</h3>
+            <p className="text-sm text-blue-100">Real-time emergency services tracking</p>
+          </button>
+          
+          <button
+            onClick={() => navigator.geolocation?.getCurrentPosition(
+              (position) => {
+                const { latitude, longitude } = position.coords;
+                const mapsUrl = `https://www.google.com/maps/@${latitude},${longitude},15z`;
+                window.open(mapsUrl, '_blank');
+              },
+              (error) => {
+                console.error('Error getting location:', error);
+                alert('Location access denied. Please enable location services.');
+              }
+            )}
+            className="bg-green-600 hover:bg-green-700 text-white p-6 rounded-xl border border-green-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-green-500/20"
+          >
+            <Globe className="h-8 w-8 mx-auto mb-2" />
+            <h3 className="text-lg font-semibold mb-2">Emergency Map</h3>
+            <p className="text-sm text-green-100">View nearby emergency services</p>
+          </button>
+        </div>
+
+        {/* Emergency Resource Tracker */}
+        {showResourceTracker && (
+          <div className="mt-8">
+            <EmergencyResourceTracker userLocation={userLocation} />
+          </div>
+        )}
       </div>
+
+      {/* Emergency Modals */}
+      {selectedAlert && (
+        <AlertDetailModal
+          alertId={selectedAlert.id}
+          isOpen={true}
+          onClose={() => setSelectedAlert(null)}
+        />
+      )}
+
+      {showIncidentReport && (
+        <IncidentReportForm
+          onSubmit={(data) => {
+            console.log('Incident report submitted:', data);
+            setShowIncidentReport(false);
+            // Here you would typically send the data to your backend
+          }}
+          onCancel={() => setShowIncidentReport(false)}
+        />
+      )}
     </section>
   );
 };
