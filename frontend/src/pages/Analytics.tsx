@@ -65,6 +65,7 @@ export const Analytics: React.FC = () => {
   const [activeTab, setActiveTab] = useState('analytics');
   const [timeRange, setTimeRange] = useState('7d');
   const [selectedMetric, setSelectedMetric] = useState('warnings');
+  const [loading, setLoading] = useState(false);
   const [performanceData, setPerformanceData] = useState<PerformanceDataPoint[]>([]);
   const [networkTopologyData, setNetworkTopologyData] = useState<NetworkNode[]>([]);
   const [realtimeMetrics, setRealtimeMetrics] = useState<RealtimeMetrics>({
@@ -88,11 +89,16 @@ export const Analytics: React.FC = () => {
   // Load real API data
   const loadRealData = useCallback(async () => {
     try {
+      console.log('🔄 Loading real analytics data...');
+      setLoading(true);
+      
       const [performanceMetrics, networkTopology, systemMetrics] = await Promise.all([
         analyticsService.getPerformanceMetrics(timeRange),
         analyticsService.getNetworkTopology(),
         analyticsService.getSystemMetrics()
       ]);
+
+      console.log('✅ Analytics data loaded:', { performanceMetrics, networkTopology, systemMetrics });
 
       // Transform API data to component format
       const transformedPerformance = performanceMetrics.map(metric => ({
@@ -142,12 +148,14 @@ export const Analytics: React.FC = () => {
         emergency: 'fallback'
       });
     } catch (error) {
-      console.error('Failed to load real API data:', error);
+      console.error('❌ Failed to load real API data:', error);
       setApiStatus({
         system: 'fallback',
         network: 'fallback',
         emergency: 'fallback'
       });
+    } finally {
+      setLoading(false);
     }
   }, [timeRange]);
 
