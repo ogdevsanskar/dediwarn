@@ -123,7 +123,7 @@ export const Analytics: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   <div className="w-32 bg-slate-700 rounded-full h-2">
                     <div 
-                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300 progress-bar"
+                      className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full progress-bar"
                       data-width={item.percentage}
                     />
                   </div>

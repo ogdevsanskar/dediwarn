@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Phone, MessageSquare, AlertTriangle, Users, Clock, MapPin, Camera, Mic, FileText, Send, Shield } from 'lucide-react';
+import { Phone, MessageSquare, AlertTriangle, MapPin, Camera, Mic, FileText, Send, Shield } from 'lucide-react';
 
 export const EmergencyCenter: React.FC = () => {
   const [activeTab, setActiveTab] = useState('communication');
-  const [emergencyType, setEmergencyType] = useState('general');
   const [reportForm, setReportForm] = useState({
     type: '',
     severity: 'medium',
@@ -211,6 +210,7 @@ export const EmergencyCenter: React.FC = () => {
             <select
               value={reportForm.type}
               onChange={(e) => setReportForm({...reportForm, type: e.target.value})}
+              aria-label="Select incident type"
               className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select incident type...</option>

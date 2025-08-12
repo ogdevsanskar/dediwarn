@@ -17,7 +17,7 @@ import Collaboration from './pages/Collaboration';
 import EnhancedDashboard from './pages/EnhancedDashboard';
 import EducationGamification from './pages/EducationGamification';
 import { initializeButtonFunctionality } from './components/ButtonFunctionality';
-import { AppNotification, DamageReport, EnvironmentalData, EmergencyAlert } from './types';
+import { AppNotification } from './types';
 
 interface InstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -164,137 +164,6 @@ function App() {
       ]
     };
     setNotifications(prev => [notification, ...prev]);
-  };
-
-  const handleLocationUpdate = (location: { lat: number; lng: number; accuracy: number }) => {
-    setUserLocation({ lat: location.lat, lng: location.lng });
-  };
-
-  const handleDamageReport = async (report: DamageReport) => {
-    try {
-      // Store offline if no connection
-      if (!isOnline) {
-        const db = await openOfflineDB();
-        await storeOfflineReport(db, report);
-        
-        const notification = {
-          id: Date.now(),
-          type: 'offline_report' as const,
-          title: 'Report Saved Offline',
-          message: 'Your emergency report will be sent when you\'re back online.',
-          severity: 'medium' as const,
-          timestamp: new Date().toISOString()
-        };
-        setNotifications(prev => [notification, ...prev]);
-        return;
-      }
-
-      // Send report online
-      const formData = new FormData();
-      
-      // Add basic report data
-      if (report.type) formData.append('type', report.type);
-      if (report.description) formData.append('description', report.description);
-      if (report.severity) formData.append('severity', report.severity);
-      if (report.userId) formData.append('userId', report.userId);
-      if (report.timestamp) formData.append('timestamp', report.timestamp.toString());
-      if (report.location) formData.append('location', JSON.stringify(report.location));
-      
-      // Add images if present
-      if (report.images && report.images.length > 0) {
-        report.images.forEach((image, index) => {
-          formData.append(`image_${index}`, image);
-        });
-      }
-
-      await fetch('/api/emergency-reports', {
-        method: 'POST',
-        body: formData
-      });
-
-      const notification = {
-        id: Date.now(),
-        type: 'report_sent' as const,
-        title: 'Emergency Report Sent',
-        message: 'Your report has been successfully submitted to emergency services.',
-        severity: 'low' as const,
-        timestamp: new Date().toISOString()
-      };
-      setNotifications(prev => [notification, ...prev]);
-    } catch (error) {
-      console.error('Error sending report:', error);
-    }
-  };
-
-  const handleEnvironmentalData = async (data: EnvironmentalData) => {
-    try {
-      await fetch('/api/environmental-data', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          userId: 'current_user_id',
-          timestamp: Date.now()
-        })
-      });
-    } catch (error) {
-      console.error('Error sending environmental data:', error);
-    }
-  };
-
-  const handleAlertReceived = (alert: EmergencyAlert) => {
-    const notification = {
-      id: Date.now(),
-      type: 'emergency_alert' as const,
-      title: alert.title || 'Emergency Alert',
-      message: alert.description || alert.message || 'Emergency alert received',
-      severity: alert.severity || 'high' as const,
-      timestamp: new Date().toISOString(),
-      location: alert.location,
-      actions: alert.actions || []
-    };
-    setNotifications(prev => [notification, ...prev]);
-
-    // Show browser notification if permission granted
-    if (Notification.permission === 'granted') {
-      new Notification(notification.title, {
-        body: notification.message,
-        icon: '/icon-192.png',
-        badge: '/badge-72.png',
-        tag: 'emergency-alert',
-        requireInteraction: true
-      });
-    }
-
-    // Vibrate if supported
-    if ('vibrate' in navigator) {
-      navigator.vibrate([200, 100, 200, 100, 200]);
-    }
-  };
-
-  const openOfflineDB = (): Promise<IDBDatabase> => {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('DeDiWARN_OfflineDB', 1);
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve(request.result);
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains('pendingReports')) {
-          db.createObjectStore('pendingReports', { keyPath: 'id' });
-        }
-      };
-    });
-  };
-
-  const storeOfflineReport = (db: IDBDatabase, report: DamageReport): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(['pendingReports'], 'readwrite');
-      const store = transaction.objectStore('pendingReports');
-      const request = store.add({ ...report, id: Date.now() });
-      
-      request.onerror = () => reject(request.error);
-      request.onsuccess = () => resolve();
-    });
   };
 
   return (
