@@ -65,7 +65,6 @@ export const Analytics: React.FC = () => {
   const [activeTab, setActiveTab] = useState('analytics');
   const [timeRange, setTimeRange] = useState('7d');
   const [selectedMetric, setSelectedMetric] = useState('warnings');
-  const [loading, setLoading] = useState(false);
   const [performanceData, setPerformanceData] = useState<PerformanceDataPoint[]>([]);
   const [networkTopologyData, setNetworkTopologyData] = useState<NetworkNode[]>([]);
   const [realtimeMetrics, setRealtimeMetrics] = useState<RealtimeMetrics>({
@@ -90,7 +89,6 @@ export const Analytics: React.FC = () => {
   const loadRealData = useCallback(async () => {
     try {
       console.log('🔄 Loading real analytics data...');
-      setLoading(true);
       
       const [performanceMetrics, networkTopology, systemMetrics] = await Promise.all([
         analyticsService.getPerformanceMetrics(timeRange),
@@ -154,8 +152,6 @@ export const Analytics: React.FC = () => {
         network: 'fallback',
         emergency: 'fallback'
       });
-    } finally {
-      setLoading(false);
     }
   }, [timeRange]);
 
