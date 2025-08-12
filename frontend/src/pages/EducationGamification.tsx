@@ -18,7 +18,20 @@ import {
   Leaf,
   UserCheck,
   Calendar,
-  Medal
+  Medal,
+  Video,
+  Download,
+  Share2,
+  RefreshCw,
+  Settings,
+  Bell,
+  X,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Minimize,
+  PlayCircle,
+  Pause
 } from 'lucide-react';
 
 // Progress bar component using Tailwind arbitrary values
@@ -58,6 +71,29 @@ interface LearningModule {
   prerequisites?: string[];
   completionRate: number;
   learners: number;
+  videoUrl?: string;
+  resources?: {
+    title: string;
+    type: 'pdf' | 'video' | 'link' | 'quiz';
+    url: string;
+  }[];
+}
+
+interface VideoPlayer {
+  isOpen: boolean;
+  videoUrl: string;
+  title: string;
+  isPlaying: boolean;
+  isMuted: boolean;
+  isFullscreen: boolean;
+  currentTime: number;
+  duration: number;
+}
+
+interface NotificationState {
+  isVisible: boolean;
+  message: string;
+  type: 'success' | 'error' | 'info' | 'warning';
 }
 
 interface Challenge {
@@ -103,6 +139,22 @@ const EducationGamification: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [learningModules, setLearningModules] = useState<LearningModule[]>([]);
   const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [videoPlayer, setVideoPlayer] = useState<VideoPlayer>({
+    isOpen: false,
+    videoUrl: '',
+    title: '',
+    isPlaying: false,
+    isMuted: false,
+    isFullscreen: false,
+    currentTime: 0,
+    duration: 0
+  });
+  const [notification, setNotification] = useState<NotificationState>({
+    isVisible: false,
+    message: '',
+    type: 'info'
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [userProgress] = useState<UserProgress>({
     level: 12,
     experience: 3420,
@@ -141,6 +193,158 @@ const EducationGamification: React.FC = () => {
     loadChallenges();
   }, []);
 
+  // Show notification helper
+  const showNotification = (message: string, type: NotificationState['type'] = 'info') => {
+    setNotification({ isVisible: true, message, type });
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, isVisible: false }));
+    }, 3000);
+  };
+
+  // Video player functions
+  const openVideoPlayer = (videoUrl: string, title: string) => {
+    setVideoPlayer({
+      isOpen: true,
+      videoUrl,
+      title,
+      isPlaying: false,
+      isMuted: false,
+      isFullscreen: false,
+      currentTime: 0,
+      duration: 0
+    });
+  };
+
+  const closeVideoPlayer = () => {
+    setVideoPlayer(prev => ({ ...prev, isOpen: false, isPlaying: false }));
+  };
+
+  const toggleVideoPlay = () => {
+    setVideoPlayer(prev => ({ ...prev, isPlaying: !prev.isPlaying }));
+  };
+
+  const toggleVideoMute = () => {
+    setVideoPlayer(prev => ({ ...prev, isMuted: !prev.isMuted }));
+  };
+
+  const toggleFullscreen = () => {
+    setVideoPlayer(prev => ({ ...prev, isFullscreen: !prev.isFullscreen }));
+  };
+
+  // Module interaction functions
+  const startModule = async (moduleId: string) => {
+    setIsLoading(true);
+    const module = learningModules.find(m => m.id === moduleId);
+    
+    if (!module) {
+      showNotification('Module not found', 'error');
+      setIsLoading(false);
+      return;
+    }
+
+    if (module.locked) {
+      showNotification('Module is locked. Complete prerequisites first.', 'warning');
+      setIsLoading(false);
+      return;
+    }
+
+    // Simulate loading
+    setTimeout(() => {
+      if (module.videoUrl) {
+        openVideoPlayer(module.videoUrl, module.title);
+      } else {
+        showNotification(`Starting ${module.title}...`, 'success');
+      }
+      setIsLoading(false);
+    }, 1000);
+  };
+
+  const completeModule = (moduleId: string) => {
+    setLearningModules(prev => 
+      prev.map(module => 
+        module.id === moduleId 
+          ? { ...module, completed: true }
+          : module
+      )
+    );
+    
+    const module = learningModules.find(m => m.id === moduleId);
+    if (module) {
+      showNotification(`Congratulations! You earned ${module.points} points!`, 'success');
+    }
+  };
+
+  // Challenge interaction functions
+  const joinChallenge = async (challengeId: string) => {
+    setIsLoading(true);
+    
+    setTimeout(() => {
+      setChallenges(prev =>
+        prev.map(challenge =>
+          challenge.id === challengeId
+            ? { ...challenge, progress: Math.min(challenge.progress + 1, challenge.maxProgress) }
+            : challenge
+        )
+      );
+      
+      const challenge = challenges.find(c => c.id === challengeId);
+      if (challenge) {
+        showNotification(`Joined ${challenge.title}! Good luck!`, 'success');
+      }
+      setIsLoading(false);
+    }, 800);
+  };
+
+  const shareProgress = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'My Climate Education Progress',
+          text: `I'm Level ${userProgress.level} with ${userProgress.totalPoints} points on DeDiWARN Education!`,
+          url: window.location.href
+        });
+      } else {
+        // Fallback to clipboard
+        await navigator.clipboard.writeText(
+          `I'm Level ${userProgress.level} with ${userProgress.totalPoints} points on DeDiWARN Education! ${window.location.href}`
+        );
+        showNotification('Progress shared to clipboard!', 'success');
+      }
+    } catch (err) {
+      console.error('Share failed:', err);
+      showNotification('Failed to share progress', 'error');
+    }
+  };
+
+  const downloadCertificate = async (moduleId: string) => {
+    setIsLoading(true);
+    const module = learningModules.find(m => m.id === moduleId);
+    
+    if (!module || !module.completed) {
+      showNotification('Complete the module first to download certificate', 'warning');
+      setIsLoading(false);
+      return;
+    }
+
+    // Simulate certificate generation
+    setTimeout(() => {
+      showNotification(`Certificate for "${module.title}" downloaded!`, 'success');
+      setIsLoading(false);
+    }, 2000);
+  };
+
+  const refreshData = async () => {
+    setIsLoading(true);
+    showNotification('Refreshing data...', 'info');
+    
+    setTimeout(() => {
+      loadLearningModules();
+      loadChallenges();
+      showNotification('Data refreshed successfully!', 'success');
+      setIsLoading(false);
+    }, 1500);
+  };
+
   const loadLearningModules = () => {
     setLearningModules([
       {
@@ -155,7 +359,13 @@ const EducationGamification: React.FC = () => {
         completed: true,
         locked: false,
         completionRate: 94,
-        learners: 12450
+        learners: 12450,
+        videoUrl: 'https://www.youtube.com/embed/dcHhCtfPtSk',
+        resources: [
+          { title: 'Climate Science Basics PDF', type: 'pdf', url: '/resources/climate-basics.pdf' },
+          { title: 'Interactive Climate Quiz', type: 'quiz', url: '/quiz/climate-basics' },
+          { title: 'NASA Climate Resources', type: 'link', url: 'https://climate.nasa.gov/' }
+        ]
       },
       {
         id: 'module-2',
@@ -169,7 +379,13 @@ const EducationGamification: React.FC = () => {
         completed: true,
         locked: false,
         completionRate: 87,
-        learners: 9870
+        learners: 9870,
+        videoUrl: 'https://www.youtube.com/embed/kLMJQ1gFDUk',
+        resources: [
+          { title: 'Emergency Kit Checklist', type: 'pdf', url: '/resources/emergency-kit.pdf' },
+          { title: 'Disaster Preparedness Video', type: 'video', url: 'https://www.youtube.com/embed/BLEPk7fC6Dk' },
+          { title: 'Red Cross Emergency App', type: 'link', url: 'https://www.redcross.org/get-help/how-to-prepare-for-emergencies/mobile-apps' }
+        ]
       },
       {
         id: 'module-3',
@@ -183,7 +399,13 @@ const EducationGamification: React.FC = () => {
         completed: false,
         locked: false,
         completionRate: 76,
-        learners: 7230
+        learners: 7230,
+        videoUrl: 'https://www.youtube.com/embed/b6Ua_zWDH6U',
+        resources: [
+          { title: 'Biodiversity Conservation Guide', type: 'pdf', url: '/resources/biodiversity-guide.pdf' },
+          { title: 'Species Identification Quiz', type: 'quiz', url: '/quiz/species-id' },
+          { title: 'WWF Conservation Programs', type: 'link', url: 'https://www.worldwildlife.org/' }
+        ]
       },
       {
         id: 'module-4',
@@ -198,7 +420,13 @@ const EducationGamification: React.FC = () => {
         locked: true,
         prerequisites: ['module-2'],
         completionRate: 45,
-        learners: 3420
+        learners: 3420,
+        videoUrl: 'https://www.youtube.com/embed/F3FIqQ2bOtM',
+        resources: [
+          { title: 'Advanced Response Protocols', type: 'pdf', url: '/resources/advanced-response.pdf' },
+          { title: 'Communication Systems Training', type: 'video', url: 'https://www.youtube.com/embed/9KrpPqylz8E' },
+          { title: 'FEMA Training Resources', type: 'link', url: 'https://training.fema.gov/' }
+        ]
       },
       {
         id: 'module-5',
@@ -212,7 +440,13 @@ const EducationGamification: React.FC = () => {
         completed: false,
         locked: false,
         completionRate: 82,
-        learners: 8900
+        learners: 8900,
+        videoUrl: 'https://www.youtube.com/embed/Gwda1MbV2Dk',
+        resources: [
+          { title: 'Sustainable Living Guide', type: 'pdf', url: '/resources/sustainable-living.pdf' },
+          { title: 'Carbon Footprint Calculator', type: 'link', url: 'https://www.carbonfootprint.com/calculator.aspx' },
+          { title: 'Sustainability Assessment', type: 'quiz', url: '/quiz/sustainability' }
+        ]
       },
       {
         id: 'module-6',
@@ -226,7 +460,13 @@ const EducationGamification: React.FC = () => {
         completed: false,
         locked: false,
         completionRate: 68,
-        learners: 5670
+        learners: 5670,
+        videoUrl: 'https://www.youtube.com/embed/8gDZLXlA8Bw',
+        resources: [
+          { title: 'Community Resilience Toolkit', type: 'pdf', url: '/resources/community-toolkit.pdf' },
+          { title: 'Leadership in Crisis Training', type: 'video', url: 'https://www.youtube.com/embed/2X8dh8flKnA' },
+          { title: 'Community Action Networks', type: 'link', url: 'https://www.350.org/' }
+        ]
       }
     ]);
   };
@@ -344,22 +584,29 @@ const EducationGamification: React.FC = () => {
         {/* Header with User Progress */}
         <div className="mb-8">
           <div className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-xl border border-blue-500/30 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-white mb-2">
-                  Climate Education & Action Center
-                </h1>
-                <p className="text-blue-400">
-                  Learn, engage, and make a difference in environmental protection
-                </p>
-              </div>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-white mb-2">
+                Climate Education & Action Center
+              </h1>
+              <p className="text-blue-400">
+                Learn, engage, and make a difference in environmental protection
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={shareProgress}
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                <Share2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Share Progress</span>
+              </button>
               <div className="text-right">
                 <div className="text-3xl font-bold text-purple-400">Level {userProgress.level}</div>
                 <div className="text-sm text-gray-400">Rank #{userProgress.rank.toLocaleString()}</div>
               </div>
             </div>
-
-            {/* Progress Bar */}
+          </div>            {/* Progress Bar */}
             <div className="mb-6">
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-gray-300">Experience Progress</span>
@@ -529,19 +776,74 @@ const EducationGamification: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Action Button */}
-                    <button
-                      disabled={module.locked}
-                      className={`w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                        module.locked
-                          ? 'bg-slate-600 text-gray-400 cursor-not-allowed'
-                          : module.completed
-                          ? 'bg-green-600 hover:bg-green-700 text-white'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'
-                      }`}
-                    >
-                      {module.locked ? 'Locked' : module.completed ? 'Completed' : 'Start Learning'}
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="space-y-2">
+                      <button
+                        disabled={module.locked || isLoading}
+                        onClick={() => startModule(module.id)}
+                        className={`w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                          module.locked
+                            ? 'bg-slate-600 text-gray-400 cursor-not-allowed'
+                            : module.completed
+                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white'
+                        }`}
+                      >
+                        {isLoading ? (
+                          <RefreshCw className="h-4 w-4 animate-spin mx-auto" />
+                        ) : module.locked ? (
+                          'Locked'
+                        ) : module.completed ? (
+                          'Review Module'
+                        ) : (
+                          'Start Learning'
+                        )}
+                      </button>
+
+                      {/* Secondary Actions */}
+                      {!module.locked && (
+                        <div className="flex space-x-2">
+                          {module.videoUrl && (
+                            <button
+                              onClick={() => openVideoPlayer(module.videoUrl!, module.title)}
+                              className="flex-1 py-1 px-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded text-xs transition-colors flex items-center justify-center"
+                            >
+                              <Video className="h-3 w-3 mr-1" />
+                              Video
+                            </button>
+                          )}
+                          
+                          {module.completed && (
+                            <button
+                              onClick={() => downloadCertificate(module.id)}
+                              disabled={isLoading}
+                              className="flex-1 py-1 px-2 bg-green-600/20 hover:bg-green-600/30 text-green-400 rounded text-xs transition-colors flex items-center justify-center"
+                            >
+                              <Download className="h-3 w-3 mr-1" />
+                              Cert
+                            </button>
+                          )}
+
+                          {!module.completed && !module.locked && (
+                            <button
+                              onClick={() => completeModule(module.id)}
+                              className="flex-1 py-1 px-2 bg-yellow-600/20 hover:bg-yellow-600/30 text-yellow-400 rounded text-xs transition-colors flex items-center justify-center"
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Complete
+                            </button>
+                          )}
+                          
+                          <button
+                            onClick={shareProgress}
+                            className="flex-1 py-1 px-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded text-xs transition-colors flex items-center justify-center"
+                          >
+                            <Share2 className="h-3 w-3 mr-1" />
+                            Share
+                          </button>
+                        </div>
+                      )}
+                    </div>
 
                     {module.badge && (
                       <div className="mt-2 text-xs text-center text-yellow-400">
@@ -623,14 +925,21 @@ const EducationGamification: React.FC = () => {
                   </div>
 
                   <button
-                    disabled={challenge.completed}
+                    disabled={challenge.completed || isLoading}
+                    onClick={() => joinChallenge(challenge.id)}
                     className={`w-full py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
                       challenge.completed
                         ? 'bg-green-600 text-white cursor-default'
                         : 'bg-blue-600 hover:bg-blue-700 text-white'
                     }`}
                   >
-                    {challenge.completed ? 'Completed!' : 'Join Challenge'}
+                    {isLoading ? (
+                      <RefreshCw className="h-4 w-4 animate-spin mx-auto" />
+                    ) : challenge.completed ? (
+                      'Completed!'
+                    ) : (
+                      'Join Challenge'
+                    )}
                   </button>
                 </div>
               ))}
@@ -811,6 +1120,147 @@ const EducationGamification: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Video Player Modal */}
+      {videoPlayer.isOpen && (
+        <div className={`fixed inset-0 bg-black/90 flex items-center justify-center z-50 ${
+          videoPlayer.isFullscreen ? 'p-0' : 'p-4'
+        }`}>
+          <div className={`bg-slate-800 rounded-xl border border-slate-700 ${
+            videoPlayer.isFullscreen ? 'w-full h-full' : 'w-full max-w-4xl'
+          }`}>
+            {/* Video Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-700">
+              <h3 className="text-lg font-semibold text-white">{videoPlayer.title}</h3>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={toggleVideoMute}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  {videoPlayer.isMuted ? (
+                    <VolumeX className="h-5 w-5 text-gray-400" />
+                  ) : (
+                    <Volume2 className="h-5 w-5 text-white" />
+                  )}
+                </button>
+                <button
+                  onClick={toggleFullscreen}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  {videoPlayer.isFullscreen ? (
+                    <Minimize className="h-5 w-5 text-white" />
+                  ) : (
+                    <Maximize className="h-5 w-5 text-white" />
+                  )}
+                </button>
+                <button
+                  onClick={closeVideoPlayer}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5 text-white" />
+                </button>
+              </div>
+            </div>
+
+            {/* Video Content */}
+            <div className={`relative ${videoPlayer.isFullscreen ? 'h-full' : 'aspect-video'}`}>
+              <iframe
+                src={videoPlayer.videoUrl}
+                title={videoPlayer.title}
+                className="w-full h-full"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+              
+              {/* Video Controls Overlay */}
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between bg-black/50 backdrop-blur-sm rounded-lg p-3">
+                <button
+                  onClick={toggleVideoPlay}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  {videoPlayer.isPlaying ? (
+                    <Pause className="h-6 w-6 text-white" />
+                  ) : (
+                    <PlayCircle className="h-6 w-6 text-white" />
+                  )}
+                </button>
+                
+                <div className="flex-1 mx-4">
+                  <div className="w-full bg-white/20 rounded-full h-2">
+                    <div 
+                      className="bg-blue-500 h-2 rounded-full transition-all duration-200"
+                      ref={(el) => {
+                        if (el && videoPlayer.duration > 0) {
+                          el.style.width = `${(videoPlayer.currentTime / videoPlayer.duration) * 100}%`;
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                <div className="text-white text-sm">
+                  {Math.floor(videoPlayer.currentTime / 60)}:{(videoPlayer.currentTime % 60).toString().padStart(2, '0')} / 
+                  {Math.floor(videoPlayer.duration / 60)}:{(videoPlayer.duration % 60).toString().padStart(2, '0')}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Toast */}
+      {notification.isVisible && (
+        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+          <div className={`rounded-xl border p-4 shadow-lg backdrop-blur-sm ${
+            notification.type === 'success' ? 'bg-green-600/20 border-green-500/30 text-green-400' :
+            notification.type === 'error' ? 'bg-red-600/20 border-red-500/30 text-red-400' :
+            notification.type === 'warning' ? 'bg-yellow-600/20 border-yellow-500/30 text-yellow-400' :
+            'bg-blue-600/20 border-blue-500/30 text-blue-400'
+          }`}>
+            <div className="flex items-center space-x-3">
+              <div className={`w-2 h-2 rounded-full ${
+                notification.type === 'success' ? 'bg-green-400' :
+                notification.type === 'error' ? 'bg-red-400' :
+                notification.type === 'warning' ? 'bg-yellow-400' :
+                'bg-blue-400'
+              }`} />
+              <span className="font-medium">{notification.message}</span>
+              <button
+                onClick={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Action Button - Refresh Data */}
+      <button
+        onClick={refreshData}
+        disabled={isLoading}
+        className="fixed bottom-6 right-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110 z-40"
+      >
+        <RefreshCw className={`h-6 w-6 ${isLoading ? 'animate-spin' : ''}`} />
+      </button>
+
+      {/* Settings Button */}
+      <button
+        onClick={() => showNotification('Settings panel coming soon!', 'info')}
+        className="fixed bottom-6 right-20 bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110 z-40"
+      >
+        <Settings className="h-6 w-6" />
+      </button>
+
+      {/* Notification Bell */}
+      <button
+        onClick={() => showNotification('You have 3 new achievements!', 'success')}
+        className="fixed bottom-6 right-32 bg-yellow-600 hover:bg-yellow-700 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110 z-40"
+      >
+        <Bell className="h-6 w-6" />
+      </button>
     </div>
   );
 };
