@@ -8,14 +8,14 @@ export const Header: React.FC = () => {
   const location = useLocation();
 
   const mainNavItems = [
-    { name: 'Dashboard', path: '/', icon: '🏠' },
-    { name: 'Global Hub', path: '/enhanced-dashboard', icon: '🌍' },
-    { name: 'Collaboration', path: '/collaboration', icon: '🤝' },
-    { name: 'Contracts', path: '/contracts', icon: '📄' },
-    { name: 'Analytics Hub', path: '/analytics', icon: '📊' },
-    { name: 'Emergency Center', path: '/emergency-communication', icon: '🚨' },
-    { name: 'Donations', path: '/donations', icon: '💖' },
-    { name: 'Education', path: '/education', icon: '🎓' },
+    { name: 'Dashboard', path: '/' },
+    { name: 'Global Hub', path: '/enhanced-dashboard' },
+    { name: 'Collaboration', path: '/collaboration' },
+    { name: 'Contracts', path: '/contracts' },
+    { name: 'Analytics Hub', path: '/analytics' },
+    { name: 'Emergency Center', path: '/emergency-communication' },
+    { name: 'Donations', path: '/donations' },
+    { name: 'Education', path: '/education' },
   ];
 
   return (
@@ -38,16 +38,14 @@ export const Header: React.FC = () => {
                 <Link
                   key={item.name}
                   to={item.path}
-                  className={`relative px-2 xl:px-4 py-2 xl:py-2.5 text-xs xl:text-sm rounded-lg transition-all duration-300 group whitespace-nowrap flex items-center space-x-1 xl:space-x-2 font-medium ${
+                  className={`relative px-3 xl:px-4 py-2 xl:py-2.5 text-sm xl:text-sm rounded-lg transition-all duration-300 group whitespace-nowrap flex items-center font-medium ${
                     location.pathname === item.path
                       ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-600/25 scale-105'
                       : 'text-slate-300 hover:text-white hover:bg-slate-700/70 hover:scale-105'
                   }`}
                   style={{ animationDelay: `${index * 75}ms` }}
-                  title={item.name}
                 >
-                  <span className="text-sm xl:text-base">{item.icon}</span>
-                  <span className="hidden lg:block xl:block">{item.name}</span>
+                  <span>{item.name}</span>
                   {location.pathname === item.path && (
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-lg blur-xl" />
                   )}
@@ -87,7 +85,7 @@ export const Header: React.FC = () => {
               <Link
                 key={item.name}
                 to={item.path}
-                className={`flex items-center space-x-3 py-3 px-4 rounded-xl transition-all duration-200 ${
+                className={`flex items-center justify-between py-3 px-4 rounded-xl transition-all duration-200 ${
                   location.pathname === item.path
                     ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-600/25'
                     : 'text-slate-300 hover:text-white hover:bg-slate-700/70 active:scale-95'
@@ -95,10 +93,9 @@ export const Header: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
                 style={{ animationDelay: `${index * 50}ms` }}
               >
-                <span className="text-lg">{item.icon}</span>
                 <span className="font-medium">{item.name}</span>
                 {location.pathname === item.path && (
-                  <div className="ml-auto w-2 h-2 bg-white rounded-full animate-pulse" />
+                  <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                 )}
               </Link>
             ))}
