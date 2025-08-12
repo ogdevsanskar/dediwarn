@@ -8,11 +8,12 @@ import { Analytics } from './pages/Analytics';
 import { EmergencyCenter } from './pages/EmergencyCenter';
 import { Donations } from './pages/Donations';
 import { Volunteers } from './pages/Volunteers';
-import { Dashboard } from './pages/Dashboard';
+import { Dashboard } from './components/Dashboard';
 import { MainDashboard } from './components/MainDashboard';
 import { AnimatedBackground } from './components/AnimatedBackground';
 import { AIAssistant } from './components/AIAssistant';
 import { NotificationCenter } from './components/NotificationCenter';
+import ReportIncident from './components/ReportIncident';
 import Collaboration from './pages/Collaboration';
 import EnhancedDashboard from './pages/EnhancedDashboard';
 import EducationGamification from './pages/EducationGamification';
@@ -227,6 +228,7 @@ function App() {
             <Route path="/" element={<MainDashboard userLocation={userLocation} />} />
             <Route path="/home" element={<Home />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/report-incident" element={<ReportIncident />} />
             <Route path="/warnings" element={<Warnings />} />
             <Route path="/contracts" element={<SmartContracts />} />
             <Route path="/analytics" element={<Analytics />} />

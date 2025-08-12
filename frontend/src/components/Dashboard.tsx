@@ -4,7 +4,6 @@ import { StatsCard } from './StatsCard';
 import { AlertDetailModal } from './AlertDetailModal';
 import { IncidentReportForm } from './IncidentReportForm';
 import { EmergencyResourceTracker } from './EmergencyResourceTracker';
-import './Dashboard.css';
 
 interface Warning {
   id: string;
