@@ -9,6 +9,7 @@ import { Network } from './pages/Network';
 import { Donations } from './pages/Donations';
 import { Volunteers } from './pages/Volunteers';
 import { Training } from './pages/Training';
+import { Prediction } from './pages/Prediction';
 import { Map } from './pages/Map';
 import { Dashboard } from './pages/Dashboard';
 import { MainDashboard } from './components/MainDashboard';
@@ -375,6 +376,7 @@ function App() {
             <Route path="/donations" element={<Donations />} />
             <Route path="/volunteers" element={<Volunteers />} />
             <Route path="/training" element={<Training />} />
+            <Route path="/prediction" element={<Prediction />} />
             <Route path="/map" element={<Map />} />
             <Route path="/emergency-systems" element={<EmergencySystemIntegration />} />
             <Route 
