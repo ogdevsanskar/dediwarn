@@ -20,7 +20,7 @@ import {
   Scatter,
   Line
 } from 'recharts';
-import { analyticsService } from '../services/analyticsService';
+import { analyticsService, SystemMetrics } from '../services/analyticsService';
 
 // TypeScript interfaces
 interface PerformanceDataPoint {
@@ -45,7 +45,7 @@ interface NetworkNode {
   y: number;
   connections: number;
   load: number;
-  status: 'optimal' | 'good' | 'high' | 'low' | 'offline';
+  status: 'optimal' | 'good' | 'high' | 'low';
   latency: number;
   uptime: number;
 }
@@ -110,17 +110,19 @@ export const Analytics: React.FC = () => {
         bandwidthOut: metric.bandwidthOut
       }));
 
-      const transformedNetwork = networkTopology.map(node => ({
-        id: node.id,
-        name: node.name,
-        x: node.location.lng,
-        y: node.location.lat,
-        connections: node.metrics.connections,
-        load: node.metrics.load,
-        status: node.metrics.status,
-        latency: node.metrics.latency,
-        uptime: node.metrics.uptime
-      }));
+      const transformedNetwork = networkTopology
+        .filter(node => node.metrics.status !== 'offline')
+        .map(node => ({
+          id: node.id,
+          name: node.name,
+          x: node.location.lng,
+          y: node.location.lat,
+          connections: node.metrics.connections,
+          load: node.metrics.load,
+          status: node.metrics.status as 'optimal' | 'good' | 'high' | 'low',
+          latency: node.metrics.latency,
+          uptime: node.metrics.uptime
+        }));
 
       setPerformanceData(transformedPerformance);
       setNetworkTopologyData(transformedNetwork);
@@ -161,7 +163,7 @@ export const Analytics: React.FC = () => {
         setLastUpdated(new Date());
         
         if (update.type === 'system') {
-          const metrics = update.data as RealtimeMetrics;
+          const metrics = update.data as SystemMetrics;
           setRealtimeMetrics(prev => ({
             ...prev,
             ...metrics
@@ -222,7 +224,7 @@ export const Analytics: React.FC = () => {
       connections: Math.max(5, node.connections + Math.floor((Math.random() - 0.5) * 4)),
       latency: Math.floor(Math.random() * 50) + 30,
       uptime: Math.max(95, 100 - Math.random() * 3),
-      status: node.status as 'optimal' | 'good' | 'high' | 'low' | 'offline'
+      status: node.status as 'optimal' | 'good' | 'high' | 'low'
     }));
   }, []);
 
@@ -659,10 +661,6 @@ export const Analytics: React.FC = () => {
               <div className="flex items-center space-x-1">
                 <div className="w-2 h-2 bg-red-400 rounded-full"></div>
                 <span className="text-slate-400">Critical</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <span className="text-slate-400">Offline</span>
               </div>
             </div>
           </div>
